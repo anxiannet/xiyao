@@ -4,16 +4,7 @@
 
 这些文档没有删除其历史价值，但不再作为当前 MVP 开发依据。
 
-当前 MVP 只以以下内容为准：
-
-- `game_design/mvp_playable_loop_v1.md`
-- `game_design/game_flow_and_setup_v1.md`
-- `game_design/terrain_system_v1.md`
-- `game_design/dice_combat_system_v1.md`
-- `game_design/naming_decisions_v1.md`
-- `game_design/ai_campaign_v1.md`
-- `game_design/warbands/tianmen_enforcers/`
-- `game_design/warbands/qingqiu_envoys/`
+当前 MVP 以 `game_design/README.md` 中列出的文档为准。
 
 ---
 
@@ -25,7 +16,7 @@
 
 - `game_design/core_rules_v1.md`
 
-原因：已被 `game_flow_and_setup_v1.md`、`dice_combat_system_v1.md`、`mvp_playable_loop_v1.md` 取代。
+原因：已被当前流程、骰子、闭环文档取代。
 
 ## 长期经济与留存
 
@@ -39,27 +30,27 @@
 
 原因：含旧“夕火”命名与大范围天象设计，MVP 暂不实现完整四象共鸣。
 
-## 旧六势力/多战帮规划
+## 旧六势力/多小队规划
 
 - `game_design/warbands_v1.md`
 - `game_design/heroes_v1.md`
 - `game_design/warbands_alpha_v1.md`
 - `game_design/leaders_system_v1.md`
 
-原因：MVP 已收敛为两支战帮：天门执法队与青丘使团。
+原因：MVP 已收敛为两支小队：天门执法队与青丘使团。
 
 ## 旧地图与法宝池
 
 - `game_design/maps_v1.md`
 - `game_design/artifacts_v1.md`
 
-原因：MVP 地图改为程序网格 + 地形标签 + 覆盖层；百宝囊已按两支战帮独立维护。
+原因：MVP 地图改为程序网格 + 地形标签 + 覆盖层。
 
-## 旧双战帮草案
+## 旧双小队草案
 
 - `game_design/mvp_two_warbands_v1.md`
 
-原因：已被两支战帮独立目录和当前 MVP 闭环文档取代。
+原因：已被两支小队独立目录和当前 MVP 闭环文档取代。
 
 ---
 
@@ -76,5 +67,4 @@
 - 夕灵
 - 狐火
 - 狐火残留
-- 威仪
 - 律令领域
