@@ -1,21 +1,19 @@
 # 天门执法队（Tianmen Enforcers）
 
-## 战帮定位
+## 小队定位
 
-3人精英战帮。
+3人精英小队。
 
 天门执法队代表昼曜、律令、封印、净化、护阵与正面推进。
 
-在 MVP 中，它是青丘使团的主要对照战帮：
+在 MVP 中，它是青丘使团的主要对照小队：
 
 - 青丘依靠狐火残留、掩影、裂隙与假身制造路线和目标变化。
 - 天门依靠律令、律令领域、封印、净化和护阵压缩敌方行动空间。
 
-当前 MVP 中，天门不使用战帮资源。
-
 ---
 
-# 战帮背景
+# 小队背景
 
 天门执法队隶属于巡界司，是天庭派往人界处理黄昏异常的前线小队。
 
@@ -118,7 +116,7 @@ game_design/核心标签系统.md
 
 ---
 
-# 战帮成员
+# 小队成员
 
 ## 玄照
 
@@ -148,7 +146,7 @@ game_design/核心标签系统.md
 
 ---
 
-# 战帮专属机制
+# 小队专属机制
 
 ## 律令领域 decree_zone
 
@@ -225,7 +223,7 @@ assets/
   leader_xuanzhao.png
   member_baijin.png
   member_chixiao.png
-  warband_keyart.png
+  squad_keyart.png
   overlays/
     decree_zone.png
 ```
