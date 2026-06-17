@@ -38,13 +38,14 @@
 
 ## 小队文档
 
-- `warbands/tianmen_enforcers/`
-- `warbands/qingqiu_envoys/`
+- `小队/天门执法队/`
+- `小队/青丘使团/`
 
-## 人物志
+每个小队目录包含：
 
-- `角色志/青丘使团人物志.md`
-- `角色志/天门执法队人物志.md`
+- `README.md`
+- `单位与数值.md`
+- `人物志.md`
 
 ---
 
