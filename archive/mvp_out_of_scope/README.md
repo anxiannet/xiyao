@@ -1,70 +1,89 @@
-# MVP 非当前开发范围归档
+# MVP 范围外归档
 
-本目录用于记录从 active `game_design/` 中移出的旧设计文档。
+本目录用于保存从当前 MVP 中移出的旧设计、未来扩展、实验玩法与长期规划。
 
-这些文档没有删除其历史价值，但不再作为当前 MVP 开发依据。
+这些文档保留历史价值，但不再作为当前 MVP 开发依据。
 
-当前 MVP 以 `game_design/README.md` 中列出的文档为准。
+当前唯一有效入口：
 
----
-
-# 本次归档范围
-
-以下文件从 active `game_design/` 中移除，避免 Codex 或开发者误读为当前 MVP 需求：
-
-## 旧全局规则
-
-- `game_design/core_rules_v1.md`
-
-原因：已被当前流程、骰子、闭环文档取代。
-
-## 长期经济与留存
-
-- `game_design/economy_and_progression_v1.md`
-
-原因：涉及正式版长期运营，不进入 MVP。
-
-## 旧四象大系统
-
-- `game_design/four_aspects_system_v1.md`
-
-原因：含旧“夕火”命名与大范围天象设计，MVP 暂不实现完整四象共鸣。
-
-## 旧六势力/多小队规划
-
-- `game_design/warbands_v1.md`
-- `game_design/heroes_v1.md`
-- `game_design/warbands_alpha_v1.md`
-- `game_design/leaders_system_v1.md`
-
-原因：MVP 已收敛为两支小队：天门执法队与青丘使团。
-
-## 旧地图与法宝池
-
-- `game_design/maps_v1.md`
-- `game_design/artifacts_v1.md`
-
-原因：MVP 地图改为程序网格 + 地形标签 + 覆盖层。
-
-## 旧双小队草案
-
-- `game_design/mvp_two_warbands_v1.md`
-
-原因：已被两支小队独立目录和当前 MVP 闭环文档取代。
+- `game_design/README.md`
 
 ---
 
-# 保留规则
+# 归档目录
 
-以下词汇虽然包含“暮”字，但不是旧资源命名，不需要替换：
+## systems/
 
-- 暮渊
-- 暮君
-- 暮影
+系统与战术模块归档。
 
-以下词汇是当前 MVP 机制，必须保留：
+包括但不限于：
 
-- 夕灵
-- 狐火
-- 狐火残留
-- 律令领域
+- 百宝锦囊
+- 宝物
+- 妙计
+- 阵型
+- 法术
+- 化形
+- 天门威仪
+- 其它 future / future_expansion 系统
+
+当前文件：
+
+- `systems/百宝锦囊系统.md`
+
+## story/
+
+剧情、长期世界观、远期章节与非 MVP 战役内容归档。
+
+当前 MVP 世界观已整理到：
+
+- `game_design/世界观/世界观词条.md`
+- `game_design/世界观/四象体系.md`
+- `game_design/世界观/天门.md`
+- `game_design/世界观/青丘.md`
+- `game_design/世界观/暮君.md`
+
+## progression/
+
+成长、赛季、命运、长期进度系统归档。
+
+当前文件：
+
+- `progression/命运系统.md`
+
+## economy/
+
+经济、资源产出、付费与长期运营归档。
+
+当前 MVP 不实现经济系统。
+
+## experiments/
+
+实验玩法、future / future_expansion 草案、暂不确定方向归档。
+
+当前文件：
+
+- `experiments/未来扩展规划.md`
+
+---
+
+# 已被替代的旧版本文档
+
+以下旧版本不应出现在 active `game_design/` 中：
+
+- `warbands_v1`
+- `heroes_v1`
+- `warbands_alpha_v1`
+- `leaders_system_v1`
+- `mvp_two_warbands_v1`
+
+如果未来需要查阅，只能在 archive 中作为历史材料查看。
+
+---
+
+# 读取规则
+
+1. Codex / GPT / 开发者默认只读取 `game_design/README.md`。
+2. 本目录不作为当前规则来源。
+3. 本目录内容如需恢复，必须重新整理进 `game_design/` 并更新 `设定审计总表.md`。
+4. 任何新增 future / future_expansion 文档，默认进入本目录对应分类。
