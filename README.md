@@ -51,25 +51,31 @@ MVP 不包含：
 
 ---
 
-# 唯一有效入口
+# 当前有效入口
 
-当前 MVP 的游戏规则、设定与小队文档统一从这里进入：
+世界观：
+[世界观/README.md](世界观/README.md)
 
-- [游戏/游戏设定/README.md](游戏/游戏设定/README.md)
+小说：
+[小说/README.md](小说/README.md)
 
-程序实现与开发文档从这里进入：
+游戏设定：
+[游戏/游戏设定/README.md](游戏/游戏设定/README.md)
 
-- [游戏/程序代码/README.md](游戏/程序代码/README.md)
-- [游戏/程序代码/docs/README.md](游戏/程序代码/docs/README.md)
+程序代码：
+[游戏/程序代码/README.md](游戏/程序代码/README.md)
 
-数据库文档从这里进入：
+开发文档：
+[游戏/程序代码/docs/README.md](游戏/程序代码/docs/README.md)
 
-- [游戏/数据库/README.md](游戏/数据库/README.md)
+数据库：
+[游戏/数据库/README.md](游戏/数据库/README.md)
 
-归档内容从这里进入：
+测试：
+[游戏/测试/README.md](游戏/测试/README.md)
 
-- [归档/README.md](归档/README.md)
-- [归档/mvp_out_of_scope/README.md](归档/mvp_out_of_scope/README.md)
+归档：
+[归档/README.md](归档/README.md)
 
 ---
 
