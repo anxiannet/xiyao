@@ -1,225 +1,300 @@
 # 《夕妖》MVP自由对战前端交互原型
 
-## 1. 页面结构图
+## 当前实现
+
+当前网页版前端已从单纯交互壳调整为：
 
 ```text
-首屏
-├─ 模式选择
-│  ├─ 玩家 vs AI
-│  └─ AI vs AI
-├─ 地图选择
-│  ├─ test_map_a｜开阔对称图
-│  ├─ test_map_b｜裂隙侧路图
-│  └─ test_map_c｜障碍分流图
-├─ 小队选择
-│  ├─ 青丘使团
-│  └─ 天门执法队
-└─ 开始对战
-
-对战界面
-├─ 顶部：大回合 / 当前行动方 / 模式 / 地图
-├─ 左侧：六角棋盘地图
-├─ 右侧：单位信息面板 / 选中格信息 / 动作按钮
-└─ 底部：战斗日志
+前端交互
+本地地图生成
+本地地图校验
+本地部署流程
+本地回合流程
+本地AI评分
+LocalStorage保存
+离线运行
 ```
 
-## 2. UI组件树
+禁止内容仍然保持：
 
 ```text
-App
-├─ HomeScreen
-│  ├─ OptionGroup(mode)
-│  ├─ OptionGroup(map)
-│  ├─ OptionGroup(squad)
-│  └─ StartButton
-└─ BattleScreen
-   ├─ TopBar
-   ├─ HexBoard
-   │  └─ HexTile[]
-   │     ├─ TerrainIcon
-   │     ├─ CoordinateLabel
-   │     ├─ OwnerBadge
-   │     ├─ TileStatusBadge[]
-   │     └─ UnitToken
-   ├─ UnitPanel
-   │  ├─ UnitIdentity
-   │  ├─ HP/AP
-   │  ├─ StatusList
-   │  ├─ CoreSkill
-   │  ├─ SelectedTileInfo
-   │  └─ ActionButtons
-   └─ BattleLog
+不连接 Supabase
+不连接后端
+不上传服务器
+不实现联网对战
+不新增玩法
+不修改规则
 ```
 
-## 3. 视觉规范
-
-- 定位：东方神话、黄昏、战棋、卷轴、阵图、古代执法、狐火。
-- 气质：克制、冷静、肃穆、神秘。
-- 程序版优先级：调试优先、信息优先、状态优先。
-- 地图表现为战棋棋盘、卷轴、阵图、沙盘，不做自然地貌地图。
-- MVP单位表现：头像感棋子底座 + 状态图标，不做 Live2D、复杂动画、全身演出。
-
-## 4. 色板
-
-| 用途 | 名称 | 色值 |
-|---|---|---|
-| 主色 | 暮金 | `#C9A86A` |
-| 青丘色 | 狐火青 | `#4FA3A5` |
-| 天门色 | 执法白金 | `#D8D2BF` |
-| 危险色 | 赤赭 | `#B85A3C` |
-| 背景色 | 墨蓝灰 | `#2A313B` |
-
-## 5. 地形规范
-
-| 地形ID | 显示名 | 程序图标 | 桌游表现 |
-|---|---|---|---|
-| plain | 普通格 | □ | 普通地面纹理 |
-| central_objective | 中央据点 | 坛 | 祭坛 / 石台 |
-| edge_objective | 边缘据点 | 碑 | 界碑 / 烽火台 |
-| high_ground | 高台 | 台 | 岩台 |
-| cover_shadow | 掩影 | 影 | 树林 / 残墙 |
-| dusk_rift | 黄昏裂隙 | 裂 | 发光裂缝 |
-| obstacle | 障碍 | 阻 | 不可通行障碍 |
-
-## 6. 小队视觉规范
-
-### 青丘使团
-
-- 关键词：狐火、灵巧、变化、游击。
-- 元素：狐尾、灵纹、狐火、符纸。
-- 主色：狐火青 `#4FA3A5`。
-- 禁止：性感狐妖风。
-
-### 天门执法队
-
-- 关键词：律令、秩序、执法、压制。
-- 元素：令牌、锁链、法印、甲胄。
-- 主色：执法白金 `#D8D2BF`，辅以深灰。
-- 禁止：西方圣骑士风。
-
-## 7. 图标规范
-
-| 状态 | 程序短标 | 桌游标记物 |
-|---|---|---|
-| 狐印 | 印 | 圆形单色印记 |
-| 迷踪 | 迷 | 圆形单色雾纹 |
-| 逃逸 | 逃 | 圆形单色足迹 |
-| 护阵 | 护 | 圆形单色盾阵 |
-| 狐火残留 | 火 | 圆形单色火纹 |
-| 勘验区 | 验 | 圆形单色法印 |
-| 狐火充盈 | 盈 | 圆形单色满月火纹 |
-
-统一要求：单色、高识别、统一线宽，程序状态图标、桌游标记物、规则书插图复用同一母版。
-
-## 8. 特效规范
-
-| 动作 | 程序表现 | 原则 |
-|---|---|---|
-| 移动 | 路径 / 可移动格高亮 | 短、清楚、低成本 |
-| 攻击 | 赤赭目标高亮 / 闪白 | 不做长演出 |
-| 狐火 | 青色火焰光晕 | 强识别，不遮挡坐标 |
-| 律令 | 金色法印 | 用于天门技能反馈 |
-| 占领 | 升旗 / 归属徽记切换 | 状态优先 |
-
-## 9. mock数据结构
-
-当前只允许使用：
+## 页面结构
 
 ```text
-mockMaps
-mockTiles
-mockUnits
-mockActions
-mockBattleLog
+前端入口
+├─ 顶部阶段栏 PhaseHeader
+├─ 对局创建栏
+│  ├─ 模式选择：玩家 vs AI / AI vs AI
+│  ├─ 地图选择：test_map_a / test_map_b / test_map_c
+│  ├─ 小队选择：青丘使团 / 天门执法队
+│  └─ 创建对局 / 进入预览
+├─ 地图预览 MapPreview
+├─ 部署面板 DeploymentPanel
+├─ 战场区
+│  ├─ BattleBoard
+│  └─ 右侧信息区
+│     ├─ UnitInfoPanel
+│     ├─ ActionPanel
+│     └─ AIDebugPanel
+└─ BattleLog
 ```
 
-前端已落地的数据类型：
-
-```ts
-type Tile = {
-  id: string;
-  q: number;
-  r: number;
-  terrain: TerrainId;
-  deploy?: SquadId;
-  owner?: SquadId | 'neutral';
-  statuses: StatusId[];
-};
-
-type Unit = {
-  id: string;
-  name: string;
-  squad: SquadId;
-  hp: number;
-  maxHp: number;
-  ap: number;
-  tileId: string;
-  statuses: StatusId[];
-  coreSkill: string;
-  role: string;
-};
-```
-
-## 10. 前端状态流
+## 完整流程
 
 ```text
-首屏选择
+match_created
 ↓
-startBattle()
+map_preview
 ↓
-初始化 mockTiles / mockUnits / mockBattleLog
+deployment
 ↓
-进入 BattleScreen
+round_start
 ↓
-点击单位
-├─ 选中单位
-├─ 更新右侧单位面板
-├─ 显示可移动格
-└─ 显示可攻击目标
-
-点击空格
-├─ 移动模式：执行 mock 移动
-└─ 查看模式：切换选中格
-
-点击敌方
-├─ 攻击模式：显示攻击目标反馈
-└─ 查看模式：显示敌方信息
-
-点击据点
-├─ 显示归属
-└─ 显示占领状态
-
-结束行动
+turn_start
 ↓
-切换当前行动方
+unit_action
 ↓
-写入战斗日志
+turn_end
+↓
+round_end
+↓
+match_end
 ```
 
-## 11. MVP资源清单
-
-优先制作：
-
-1. 7种地形图标。
-2. 6种状态图标：狐印、迷踪、逃逸、护阵、狐火残留、勘验区。
-3. 2支小队标识：青丘使团、天门执法队。
-4. 7名单位头像：苏绫、阿照、青萝、琉尾、玄照、白烬、赤霄。
-5. 3张测试地图：test_map_a、test_map_b、test_map_c。
-6. 移动高亮。
-7. 攻击特效。
-8. 律令特效。
-9. 占领特效。
-
-## 12. TODO后端接入点
-
-仅作为未来接入点，不在当前原型实现：
+界面顶部显示：
 
 ```text
-mockMaps       -> maps API / cfg_maps
-mockTiles      -> map_tiles API / cfg_map_tiles
-mockUnits      -> units API / cfg_units
-mockActions    -> match action endpoint
-mockBattleLog  -> match event log endpoint
+当前阶段
+当前大回合
+当前行动方
+当前行动单位
+当前AP
+当前模式
+当前地图
+本地保存状态
 ```
 
-当前禁止接入：Supabase、后端服务、AI逻辑、规则引擎、联网对战。
+## 地图生成流程
+
+当前前端禁止直接把格子数据画成最终战场。
+
+实际流程：
+
+```text
+读取地图配置 mapConfigs
+↓
+读取地图格子 tiles
+↓
+validateMap 校验地图合法性
+↓
+buildBattlefield 生成地形层 terrainLayer
+↓
+生成部署区 deploymentOwner
+↓
+生成据点信息 objectiveOwner
+↓
+生成状态层 statusLayer
+↓
+生成单位层 unitLayer
+↓
+生成最终战场 BattlefieldTile[]
+```
+
+## 地图校验
+
+当前校验项：
+
+```text
+地图格子数量是否为25
+青丘部署格是否不少于5
+天门部署格是否不少于5
+据点是否不在部署区
+障碍是否不在部署区
+中央据点是否存在
+边缘据点是否存在
+地形类型是否合法
+每个格子坐标是否唯一
+```
+
+校验失败时：
+
+```text
+禁止开始部署
+禁止开始对战
+界面显示错误原因
+```
+
+## 地图预览页
+
+地图预览页显示：
+
+```text
+地图名称
+地图ID
+地图类型说明
+地形统计
+据点数量
+双方部署区数量
+地图合法性校验结果
+开始部署按钮
+```
+
+只有地图校验通过时，开始部署按钮可点击。
+
+## 部署阶段
+
+部署阶段支持：
+
+```text
+青丘使团 4名单位
+天门执法队 3名单位
+```
+
+部署规则：
+
+```text
+单位只能放在己方 deploymentOwner 对应格
+一个格子最多一个正式单位
+不能部署在障碍格
+不能部署在非己方部署格
+```
+
+玩家 vs AI：
+
+```text
+玩家部署己方
+AI方自动部署
+```
+
+AI vs AI：
+
+```text
+双方自动部署
+```
+
+## 地图显示分层
+
+每个格子按以下层级显示：
+
+```text
+terrainLayer   地形层
+statusLayer    状态层
+unitLayer      单位层
+highlightLayer 高亮层
+```
+
+状态层预留：
+
+```text
+单位状态：狐印、迷踪、逃逸、护阵
+地块状态：狐火残留、勘验区
+小队状态：狐火充盈
+全局状态：禁行状态、戒严状态、追捕状态
+```
+
+## AI调试显示
+
+AI vs AI 模式显示 AI 决策面板：
+
+```text
+当前AI单位
+候选动作列表
+每个动作总分
+每个动作评分组成
+最终选择动作
+执行结果
+```
+
+评分组成显示：
+
+```text
+据点分
+协同分
+生存分
+状态分
+位置分
+击杀分
+```
+
+## 日志事件
+
+当前日志记录：
+
+```text
+match_created
+map_validated
+deployment_start
+unit_deployed
+deployment_complete
+round_start
+turn_start
+move
+attack
+skill
+capture
+turn_end
+round_end
+match_end
+ai_decision
+```
+
+## LocalStorage
+
+当前使用：
+
+```text
+xiyao_current_match
+xiyao_match_history
+xiyao_ai_decision_log
+xiyao_ai_stats
+```
+
+保存内容：
+
+```text
+当前对局快照
+地图校验结果
+部署状态
+战斗日志
+AI决策日志
+对局结束结果
+```
+
+## 目录结构
+
+```text
+frontend/web/src
+├─ ai
+├─ data
+├─ engine
+├─ state
+├─ storage
+├─ ui
+├─ global.d.ts
+├─ main.tsx
+└─ styles.css
+```
+
+## 离线运行
+
+```bash
+cd 游戏/程序代码/frontend/web
+npm install
+npm run dev
+```
+
+打包：
+
+```bash
+npm run build
+```
+
+当前不依赖任何服务器接口。
