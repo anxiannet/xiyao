@@ -1,65 +1,96 @@
 # frontend
 
-本目录存放《夕妖》MVP 前端代码。
+本目录存放《夕妖》的多个前端工程。
 
-## 当前原型
-
-MVP自由对战前端交互原型：
+## 目录规划
 
 ```text
-玩家 vs AI
-AI vs AI
+frontend/
+├─ web
+├─ app
+├─ admin
+└─ shared-ui
 ```
 
-入口文件：
+## web
+
+当前已建立。
+
+用途：
+
+- MVP自由对战网页版
+- 玩家 vs AI
+- AI vs AI
+- 地图调试
+- 状态展示
+- 战斗日志
+
+入口：
 
 ```text
-index.html
-src/main.tsx
-src/styles.css
+web/README.md
 ```
 
-交互与视觉规范：
-
-```text
-docs/MVP自由对战前端交互原型.md
-```
-
-## 运行
+运行：
 
 ```bash
+cd 游戏/程序代码/frontend/web
 npm install
 npm run dev
 ```
 
-## 当前只允许
+## app
+
+预留。
+
+用途：
+
+- 后续手机端
+- iOS
+- Android
+
+## admin
+
+预留。
+
+用途：
+
+- 地图编辑器
+- 单位配置
+- 状态配置
+- 对局日志与回放查看
+
+## shared-ui
+
+预留。
+
+用途：
+
+- 公共色板
+- 公共图标
+- 状态标记
+- 小队徽记
+- 通用组件
+
+## 当前边界
+
+当前 `web` 只允许：
 
 - 页面
 - 组件
 - 前端状态
-- 前端路由
 - 前端资源
-- 前端测试辅助代码
 - mockMaps
 - mockTiles
 - mockUnits
 - mockActions
 - mockBattleLog
 
-## 当前禁止
+当前禁止：
 
-- 后端服务代码
-- 数据库迁移脚本
-- 游戏规则原始设定
-- 长篇设计文档
 - Supabase 连接
 - 后端 API 连接
 - AI 逻辑
 - 规则引擎
 - 联网对战
-
-## 原型边界
-
-当前实现只负责视觉设计、UI设计、前端交互原型与美术资源规范。
-
-不负责游戏规则设计、世界观设计、数据库设计、后端设计、AI逻辑设计、数值平衡或剧情设计。
+- 数据库迁移脚本
