@@ -11,6 +11,21 @@
 
 ---
 
+# 当前配置表
+
+```text
+xiyao_cfg_squads
+xiyao_cfg_units
+xiyao_cfg_skills
+xiyao_cfg_statuses
+xiyao_cfg_terrains
+xiyao_cfg_decrees
+xiyao_cfg_maps
+xiyao_cfg_map_tiles
+```
+
+---
+
 # 子目录
 
 ## schema
