@@ -1,103 +1,91 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import { mapConfigs, type MapId, type SquadId, type TerrainId } from './data/maps';
 
-type SquadId = 'qingqiu' | 'tianmen';
 type Mode = '玩家 vs AI' | 'AI vs AI';
-type TerrainId = 'plain' | 'central_objective' | 'edge_objective' | 'high_ground' | 'cover_shadow' | 'dusk_rift' | 'obstacle';
-type UnitStatus = '狐印' | '迷踪' | '逃逸' | '护阵';
-type TileStatus = '狐火残留' | '勘验区';
-type MapId = 'test_map_a' | 'test_map_b' | 'test_map_c';
-type Phase = 'map_preview' | 'deployment' | 'round_start' | 'turn_start' | 'unit_action' | 'turn_end' | 'round_end' | 'match_end';
-type ActionKind = 'move' | 'attack' | 'skill' | 'capture' | 'end_turn';
-
-type MapTileConfig = { id: string; q: number; r: number; terrain: TerrainId; deploymentOwner?: SquadId };
-type ValidationResult = { ok: boolean; errors: string[]; stats: Record<TerrainId, number>; qingqiuDeployment: number; tianmenDeployment: number; centralObjectives: number; edgeObjectives: number };
-type Tile = { id: string; q: number; r: number; terrainLayer: TerrainId; statusLayer: TileStatus[]; deploymentOwner?: SquadId; objectiveOwner?: SquadId | 'neutral' };
-type Unit = { id: string; name: string; squad: SquadId; hp: number; maxHp: number; ap: number; tileId: string | null; statusLayer: UnitStatus[]; coreSkill: string; deployed: boolean; defeated: boolean };
-type Log = { type: string; message: string };
-type ScoreBreakdown = { 目标分: number; 位置分: number; 资源分: number; 状态分: number; 据点分: number; 协同分: number; 击杀分: number; 生存分: number; 风险惩罚: number };
-type CandidateAction = { id: string; kind: ActionKind; label: string; unitId: string; targetTileId?: string; targetUnitId?: string; score: number; breakdown: ScoreBreakdown; targetLabel: string };
-type AIDecision = { round: number; unitName: string; actionType: ActionKind; target: string; totalScore: number; candidates: CandidateAction[]; selected?: CandidateAction; result: string };
-type AIStats = { games: number; qingqiuWins: number; tianmenWins: number; draws: number; averageRounds: number; averageKills: number; averageCaptures: number; averageSkills: number; averageStatusTriggers: number; averageDecrees: number; firstHandWins: number };
-type MatchState = { id: string; mode: Mode; playerSquad: SquadId; mapId: MapId; phase: Phase; round: number; activeSquad: SquadId; activeUnitId: string | null; firstSquad: SquadId; tiles: Tile[]; units: Unit[]; validation: ValidationResult; logs: Log[]; aiDecisionLog: AIDecision[]; selectedTileId: string | null; selectedUnitId: string | null; selectedDeployUnitId: string | null; result?: string; metrics: { kills: number; captures: number; skills: number; statusTriggers: number; decrees: number } };
+type Phase = 'map_preview' | 'deployment' | 'unit_action' | 'match_end';
+type Unit = { id: string; name: string; squad: SquadId; hp: number; ap: number; tileId: string | null; deployed: boolean };
+type Tile = { id: string; q: number; r: number; terrainLayer: TerrainId; deploymentOwner?: SquadId; objectiveOwner?: SquadId | 'neutral'; statusLayer: string[] };
+type LogItem = { type: string; message: string };
+type Match = { mode: Mode; mapId: MapId; phase: Phase; round: number; activeSquad: SquadId; tiles: Tile[]; units: Unit[]; logs: LogItem[]; selectedUnitId: string | null; result?: string };
 
 const squads: Record<SquadId, { name: string; mark: string }> = { qingqiu: { name: '青丘使团', mark: '狐' }, tianmen: { name: '天门执法队', mark: '令' } };
-const terrainView: Record<TerrainId, { name: string; icon: string }> = { plain: { name: '普通格', icon: '□' }, central_objective: { name: '中央据点', icon: '坛' }, edge_objective: { name: '边缘据点', icon: '碑' }, high_ground: { name: '高台', icon: '台' }, cover_shadow: { name: '掩影', icon: '影' }, dusk_rift: { name: '黄昏裂隙', icon: '裂' }, obstacle: { name: '障碍', icon: '阻' } };
-const terrainIds: TerrainId[] = ['plain', 'central_objective', 'edge_objective', 'high_ground', 'cover_shadow', 'dusk_rift', 'obstacle'];
-const statusMark: Record<UnitStatus | TileStatus, string> = { 狐印: '印', 迷踪: '迷', 逃逸: '逃', 护阵: '护', 狐火残留: '火', 勘验区: '验' };
-const mapNotes: Record<MapId, string> = { test_map_a: '5×5 QR矩形六边形战图。', test_map_b: '带黄昏裂隙的侧路测试图。', test_map_c: '带障碍分流的路径测试图。' };
-const metrics = () => ({ kills: 0, captures: 0, skills: 0, statusTriggers: 0, decrees: 0 });
+const terrainName: Record<TerrainId, string> = { plain: '普通格', central_objective: '中央据点', edge_objective: '边缘据点', high_ground: '高台', cover_shadow: '掩影', dusk_rift: '黄昏裂隙', obstacle: '障碍' };
+const terrainIcon: Record<TerrainId, string> = { plain: '□', central_objective: '坛', edge_objective: '碑', high_ground: '台', cover_shadow: '影', dusk_rift: '裂', obstacle: '阻' };
 
-function coords() {
-  const out: Array<{ q: number; r: number; id: string }> = [];
-  for (let r = -2; r <= 2; r += 1) for (let q = -2; q <= 2; q += 1) out.push({ q, r, id: `${q},${r}` });
-  return out;
-}
-
-function mapConfig(mapId: MapId): MapTileConfig[] {
-  const special: Record<string, TerrainId> = { '0,0': 'central_objective', '-2,0': 'edge_objective', '2,0': 'edge_objective', '1,-2': 'edge_objective', '-2,2': 'edge_objective', '-1,-1': 'cover_shadow', '1,1': 'cover_shadow', '-1,1': 'high_ground', '1,-1': 'high_ground' };
-  if (mapId === 'test_map_b') { special['-1,2'] = 'dusk_rift'; special['1,-1'] = 'dusk_rift'; }
-  if (mapId === 'test_map_c') { special['-1,0'] = 'obstacle'; special['1,0'] = 'obstacle'; }
-  return coords().map(({ q, r, id }) => ({ id, q, r, terrain: special[id] ?? 'plain', deploymentOwner: q === -2 ? 'qingqiu' : q === 2 ? 'tianmen' : undefined }));
-}
-
-function emptyStats(): Record<TerrainId, number> { return { plain: 0, central_objective: 0, edge_objective: 0, high_ground: 0, cover_shadow: 0, dusk_rift: 0, obstacle: 0 }; }
-function validateMap(rows: MapTileConfig[]): ValidationResult {
-  const stats = emptyStats(); const errors: string[] = []; const seen = new Set<string>(); let qd = 0; let td = 0; let co = 0; let eo = 0;
-  if (rows.length !== 25) errors.push(`地图格子数量错误：${rows.length}/25`);
-  rows.forEach((t) => { if (seen.has(t.id)) errors.push(`坐标重复：${t.id}`); seen.add(t.id); if (!terrainIds.includes(t.terrain)) errors.push(`非法地形：${t.id}`); stats[t.terrain] += 1; if (t.deploymentOwner === 'qingqiu') qd += 1; if (t.deploymentOwner === 'tianmen') td += 1; if (t.terrain === 'central_objective') co += 1; if (t.terrain === 'edge_objective') eo += 1; if (t.deploymentOwner && ['central_objective', 'edge_objective'].includes(t.terrain)) errors.push(`据点不能在部署区：${t.id}`); if (t.deploymentOwner && t.terrain === 'obstacle') errors.push(`障碍不能在部署区：${t.id}`); });
-  if (qd < 4) errors.push(`青丘部署格不足：${qd}/4`); if (td < 3) errors.push(`天门部署格不足：${td}/3`); if (!co) errors.push('缺少中央据点'); if (!eo) errors.push('缺少边缘据点');
-  return { ok: errors.length === 0, errors, stats, qingqiuDeployment: qd, tianmenDeployment: td, centralObjectives: co, edgeObjectives: eo };
-}
-
-function buildTiles(mapId: MapId, v: ValidationResult): Tile[] {
-  return v.ok ? mapConfig(mapId).map((t) => ({ id: t.id, q: t.q, r: t.r, terrainLayer: t.terrain, statusLayer: [], deploymentOwner: t.deploymentOwner, objectiveOwner: t.terrain.includes('objective') ? 'neutral' : undefined })) : [];
-}
-
-const baseUnits: Unit[] = [
-  { id: 'suling', name: '苏绫', squad: 'qingqiu', hp: 7, maxHp: 7, ap: 2, tileId: null, statusLayer: ['狐印'], coreSkill: '狐步', deployed: false, defeated: false },
-  { id: 'azhao', name: '阿照', squad: 'qingqiu', hp: 6, maxHp: 6, ap: 2, tileId: null, statusLayer: [], coreSkill: '假身', deployed: false, defeated: false },
-  { id: 'qingluo', name: '青萝', squad: 'qingqiu', hp: 6, maxHp: 6, ap: 2, tileId: null, statusLayer: [], coreSkill: '狐火引路', deployed: false, defeated: false },
-  { id: 'liuwei', name: '琉尾', squad: 'qingqiu', hp: 5, maxHp: 5, ap: 2, tileId: null, statusLayer: ['迷踪'], coreSkill: '扰弦', deployed: false, defeated: false },
-  { id: 'xuanzhao', name: '玄照', squad: 'tianmen', hp: 8, maxHp: 8, ap: 2, tileId: null, statusLayer: [], coreSkill: '颁令', deployed: false, defeated: false },
-  { id: 'baijin', name: '白烬', squad: 'tianmen', hp: 7, maxHp: 7, ap: 2, tileId: null, statusLayer: [], coreSkill: '勘验', deployed: false, defeated: false },
-  { id: 'chixiao', name: '赤霄', squad: 'tianmen', hp: 9, maxHp: 9, ap: 2, tileId: null, statusLayer: ['护阵'], coreSkill: '护阵', deployed: false, defeated: false },
+const unitSeed: Unit[] = [
+  { id: 'suling', name: '苏绫', squad: 'qingqiu', hp: 7, ap: 2, tileId: null, deployed: false },
+  { id: 'azhao', name: '阿照', squad: 'qingqiu', hp: 6, ap: 2, tileId: null, deployed: false },
+  { id: 'qingluo', name: '青萝', squad: 'qingqiu', hp: 6, ap: 2, tileId: null, deployed: false },
+  { id: 'liuwei', name: '琉尾', squad: 'qingqiu', hp: 5, ap: 2, tileId: null, deployed: false },
+  { id: 'xuanzhao', name: '玄照', squad: 'tianmen', hp: 8, ap: 2, tileId: null, deployed: false },
+  { id: 'baijin', name: '白烬', squad: 'tianmen', hp: 7, ap: 2, tileId: null, deployed: false },
+  { id: 'chixiao', name: '赤霄', squad: 'tianmen', hp: 9, ap: 2, tileId: null, deployed: false },
 ];
 
-function createMatch(mode: Mode, mapId: MapId, playerSquad: SquadId): MatchState { const v = validateMap(mapConfig(mapId)); return { id: `match_${Date.now()}`, mode, playerSquad, mapId, phase: 'map_preview', round: 0, activeSquad: playerSquad, firstSquad: playerSquad, activeUnitId: null, tiles: buildTiles(mapId, v), units: baseUnits.map((u) => ({ ...u, statusLayer: [...u.statusLayer] })), validation: v, logs: [{ type: 'match_created', message: `创建对局：${mode}` }, { type: 'map_validated', message: v.ok ? '地图校验通过' : v.errors.join('；') }], aiDecisionLog: [], selectedTileId: null, selectedUnitId: null, selectedDeployUnitId: baseUnits.find((u) => u.squad === playerSquad)?.id ?? null, metrics: metrics() }; }
-function addLog(m: MatchState, type: string, message: string): MatchState { return { ...m, logs: [{ type, message }, ...m.logs].slice(0, 100) }; }
-function occupied(m: MatchState) { return new Map(m.units.filter((u) => u.tileId && !u.defeated).map((u) => [u.tileId as string, u])); }
-function unit(m: MatchState, id: string | null) { return m.units.find((u) => u.id === id) ?? null; }
-function allDeployed(m: MatchState) { return m.units.every((u) => u.deployed); }
-function deployable(m: MatchState, squad: SquadId) { return m.tiles.filter((t) => t.deploymentOwner === squad && t.terrainLayer !== 'obstacle'); }
-function pending(m: MatchState, squad: SquadId) { return m.units.filter((u) => u.squad === squad && !u.deployed); }
-function autoDeploy(m: MatchState, squad: SquadId) { let next = m; pending(next, squad).forEach((u, i) => { const slot = deployable(next, squad)[i]; if (slot) next = deploy(next, u.id, slot.id, true); }); return next; }
-function deploy(m: MatchState, unitId: string, tileId: string, silent = false): MatchState { const u = unit(m, unitId); const t = m.tiles.find((x) => x.id === tileId); if (!u || !t) return addLog(m, 'unit_deployed', '部署失败：单位或格子不存在'); if (t.deploymentOwner !== u.squad) return addLog(m, 'unit_deployed', `${u.name} 不能部署在非己方部署区`); if (occupied(m).has(tileId)) return addLog(m, 'unit_deployed', '部署失败：格子已有单位'); const units = m.units.map((x) => x.id === unitId ? { ...x, tileId, deployed: true } : x); const next = { ...m, units, selectedDeployUnitId: pending({ ...m, units }, u.squad)[0]?.id ?? null }; return silent ? next : addLog(next, 'unit_deployed', `${u.name} 部署到 ${tileId}`); }
-function startDeployment(m: MatchState): MatchState { if (!m.validation.ok) return addLog(m, 'deployment_start', '地图校验失败，禁止部署'); let next = addLog({ ...m, phase: 'deployment' }, 'deployment_start', '进入部署阶段'); if (m.mode === 'AI vs AI') { next = autoDeploy(autoDeploy(next, 'qingqiu'), 'tianmen'); return allDeployed(next) ? startRound(next) : next; } return autoDeploy(next, m.playerSquad === 'qingqiu' ? 'tianmen' : 'qingqiu'); }
-function startRound(m: MatchState): MatchState { const squad = m.activeSquad; const first = m.units.find((u) => u.squad === squad && u.deployed && !u.defeated) ?? null; return addLog({ ...m, phase: 'unit_action', round: m.round || 1, activeUnitId: first?.id ?? null, selectedUnitId: first?.id ?? null, units: m.units.map((u) => u.squad === squad ? { ...u, ap: 2 } : u) }, 'turn_start', `${squads[squad].name} 行动开始`); }
-function neighbors(id: string) { const [q, r] = id.split(',').map(Number); return [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].map(([dq, dr]) => `${q+dq},${r+dr}`); }
-function moveTargets(m: MatchState, u: Unit | null) { if (!u?.tileId || u.ap <= 0) return []; const occ = occupied(m); return neighbors(u.tileId).filter((id) => m.tiles.some((t) => t.id === id && t.terrainLayer !== 'obstacle') && !occ.has(id)); }
-function attackTargets(m: MatchState, u: Unit | null) { if (!u?.tileId || u.ap <= 0) return [] as Unit[]; const occ = occupied(m); return neighbors(u.tileId).map((id) => occ.get(id)).filter((x): x is Unit => Boolean(x && x.squad !== u.squad)); }
-function move(m: MatchState, unitId: string, tileId: string): MatchState { const u = unit(m, unitId); if (!u || !moveTargets(m, u).includes(tileId)) return addLog(m, 'move', '移动失败'); return addLog({ ...m, units: m.units.map((x) => x.id === unitId ? { ...x, tileId, ap: x.ap - 1 } : x), selectedTileId: tileId }, 'move', `${u.name} 移动到 ${tileId}`); }
-function attack(m: MatchState, unitId: string, targetId: string): MatchState { const u = unit(m, unitId); const t = unit(m, targetId); if (!u || !t || u.ap <= 0) return addLog(m, 'attack', '攻击失败'); const defeated = t.hp <= 2; return addLog({ ...m, metrics: { ...m.metrics, kills: m.metrics.kills + (defeated ? 1 : 0) }, units: m.units.map((x) => x.id === targetId ? { ...x, hp: Math.max(0, x.hp - 2), defeated } : x.id === unitId ? { ...x, ap: x.ap - 1 } : x) }, 'attack', `${u.name} 攻击 ${t.name}`); }
-function endTurn(m: MatchState): MatchState { if (m.activeSquad === 'qingqiu') return startRound(addLog({ ...m, activeSquad: 'tianmen', phase: 'turn_end' }, 'turn_end', '青丘回合结束')); if (m.round >= 3) return addLog({ ...m, phase: 'match_end', result: '对局结束' }, 'match_end', '对局结束'); return startRound(addLog({ ...m, activeSquad: 'qingqiu', round: m.round + 1, phase: 'round_end' }, 'round_end', `大回合 ${m.round} 结束`)); }
-function scoreAction(kind: ActionKind, label: string, u: Unit, targetTileId?: string, targetUnitId?: string): CandidateAction { const breakdown: ScoreBreakdown = { 目标分: kind === 'attack' ? 20 : 0, 位置分: kind === 'move' ? 20 : 0, 资源分: targetTileId === '0,0' ? 15 : 0, 状态分: kind === 'skill' ? 15 : 0, 据点分: kind === 'capture' ? 30 : 0, 协同分: kind === 'skill' ? 20 : 0, 击杀分: kind === 'attack' ? 30 : 0, 生存分: 10, 风险惩罚: 0 }; const score = Object.values(breakdown).reduce((a, b) => a + b, 0); return { id: `${u.id}_${kind}_${targetTileId ?? targetUnitId ?? 'self'}`, kind, label, unitId: u.id, targetTileId, targetUnitId, score, breakdown, targetLabel: targetTileId ?? targetUnitId ?? '无' }; }
-function runAI(m: MatchState): MatchState { const u = unit(m, m.activeUnitId); if (!u) return endTurn(m); const candidates = [...moveTargets(m, u).map((id) => scoreAction('move', `移动到 ${id}`, u, id)), ...attackTargets(m, u).map((x) => scoreAction('attack', `攻击 ${x.name}`, u, undefined, x.id)), scoreAction('skill', u.coreSkill, u), scoreAction('end_turn', '结束行动', u)].sort((a,b)=>b.score-a.score); const pick = candidates[0]; let next = m; if (pick.kind === 'move' && pick.targetTileId) next = move(m, u.id, pick.targetTileId); else if (pick.kind === 'attack' && pick.targetUnitId) next = attack(m, u.id, pick.targetUnitId); else if (pick.kind === 'end_turn') next = endTurn(m); else next = addLog({ ...m, units: m.units.map((x)=>x.id===u.id?{...x, ap: Math.max(0, x.ap-1)}:x), metrics: { ...m.metrics, skills: m.metrics.skills + 1 } }, 'skill', `${u.name} 使用 ${u.coreSkill}`); const decision: AIDecision = { round: m.round, unitName: u.name, actionType: pick.kind, target: pick.targetLabel, totalScore: pick.score, candidates, selected: pick, result: `${u.name} 执行 ${pick.label}` }; return addLog({ ...next, aiDecisionLog: [decision, ...next.aiDecisionLog] }, 'ai_decision', decision.result); }
-function save(m: MatchState) { localStorage.setItem('xiyao_current_match', JSON.stringify(m)); localStorage.setItem('xiyao_ai_decision_log', JSON.stringify(m.aiDecisionLog)); }
+function validateMap(mapId: MapId) {
+  const config = mapConfigs[mapId];
+  const ids = new Set(config.tiles.map((t) => t.id));
+  const qingqiuDeployment = config.tiles.filter((t) => t.deploymentOwner === 'qingqiu').length;
+  const tianmenDeployment = config.tiles.filter((t) => t.deploymentOwner === 'tianmen').length;
+  const errors: string[] = [];
+  if (config.tiles.length !== 25) errors.push('地图必须为25格');
+  if (ids.size !== config.tiles.length) errors.push('地图坐标不能重复');
+  if (qingqiuDeployment < 5) errors.push('青丘部署格不足');
+  if (tianmenDeployment < 5) errors.push('天门部署格不足');
+  if (!config.tiles.some((t) => t.terrain === 'central_objective')) errors.push('缺少中央据点');
+  if (!config.tiles.some((t) => t.terrain === 'edge_objective')) errors.push('缺少边缘据点');
+  if (config.tiles.some((t) => t.deploymentOwner && t.terrain === 'obstacle')) errors.push('部署区不能是障碍');
+  if (config.tiles.some((t) => t.deploymentOwner && (t.terrain === 'central_objective' || t.terrain === 'edge_objective'))) errors.push('据点不能在部署区');
+  return { ok: errors.length === 0, errors, qingqiuDeployment, tianmenDeployment };
+}
+
+function createMatch(mode: Mode, mapId: MapId): Match {
+  const config = mapConfigs[mapId];
+  const validation = validateMap(mapId);
+  const tiles: Tile[] = validation.ok ? config.tiles.map((t) => ({ id: t.id, q: t.q, r: t.r, terrainLayer: t.terrain, deploymentOwner: t.deploymentOwner, objectiveOwner: t.terrain.includes('objective') ? 'neutral' : undefined, statusLayer: [] })) : [];
+  return { mode, mapId, phase: 'map_preview', round: 0, activeSquad: 'qingqiu', tiles, units: unitSeed.map((u) => ({ ...u })), selectedUnitId: null, logs: [{ type: 'match_created', message: `创建对局：${mode} / ${config.name}` }, { type: 'map_validated', message: validation.ok ? '地图校验通过' : validation.errors.join('；') }] };
+}
+
+function log(match: Match, type: string, message: string): Match { return { ...match, logs: [{ type, message }, ...match.logs].slice(0, 120) }; }
+function occupied(match: Match) { return new Set(match.units.filter((u) => u.tileId).map((u) => u.tileId)); }
+function deployAll(match: Match): Match {
+  const used = occupied(match);
+  const units = match.units.map((unit) => {
+    if (unit.deployed) return unit;
+    const slot = match.tiles.find((t) => t.deploymentOwner === unit.squad && !used.has(t.id));
+    if (!slot) return unit;
+    used.add(slot.id);
+    return { ...unit, tileId: slot.id, deployed: true };
+  });
+  return log({ ...match, units, phase: 'unit_action', round: 1 }, 'deployment_complete', '双方单位部署完成');
+}
+function save(match: Match) { localStorage.setItem('xiyao_current_match', JSON.stringify(match)); }
 
 function App() {
-  const [mode, setMode] = React.useState<Mode>('玩家 vs AI'); const [mapId, setMapId] = React.useState<MapId>('test_map_a'); const [playerSquad, setPlayerSquad] = React.useState<SquadId>('qingqiu'); const [match, setMatch] = React.useState(() => createMatch(mode, mapId, playerSquad)); const activeUnit = unit(match, match.activeUnitId); const selectedUnit = unit(match, match.selectedUnitId); const selectedTile = match.tiles.find((t) => t.id === match.selectedTileId) ?? null; const moves = moveTargets(match, activeUnit); const attacks = attackTargets(match, activeUnit).map((u) => u.tileId).filter(Boolean) as string[]; React.useEffect(() => save(match), [match]);
-  const clickTile = (tile: Tile) => { if (match.phase === 'map_preview') return setMatch({ ...addLog(match, 'map_validated', `查看 ${tile.id}`), selectedTileId: tile.id }); if (match.phase === 'deployment') { const id = match.selectedDeployUnitId; if (!id) return; const next = deploy({ ...match, selectedTileId: tile.id }, id, tile.id); return setMatch(allDeployed(next) ? startRound(addLog(next, 'deployment_complete', '部署完成')) : next); } const occ = occupied(match).get(tile.id); if (occ && occ.squad === match.activeSquad) return setMatch({ ...match, activeUnitId: occ.id, selectedUnitId: occ.id, selectedTileId: tile.id }); if (occ && activeUnit && attacks.includes(tile.id)) return setMatch(attack(match, activeUnit.id, occ.id)); if (activeUnit && moves.includes(tile.id)) return setMatch(move(match, activeUnit.id, tile.id)); setMatch({ ...match, selectedTileId: tile.id }); };
-  return <main className="shell"><PhaseHeader match={match} activeUnit={activeUnit}/><section className="homebar"><div className="field"><span>模式</span><select value={mode} onChange={(e)=>setMode(e.target.value as Mode)}><option>玩家 vs AI</option><option>AI vs AI</option></select></div><div className="field"><span>地图</span><select value={mapId} onChange={(e)=>setMapId(e.target.value as MapId)}><option value="test_map_a">test_map_a</option><option value="test_map_b">test_map_b</option><option value="test_map_c">test_map_c</option></select></div><div className="field"><span>小队</span><select value={playerSquad} onChange={(e)=>setPlayerSquad(e.target.value as SquadId)}><option value="qingqiu">青丘使团</option><option value="tianmen">天门执法队</option></select></div><button onClick={()=>setMatch(createMatch(mode,mapId,playerSquad))}>创建对局 / 进入预览</button></section>{match.phase==='map_preview'&&<MapPreview match={match} onStart={()=>setMatch(startDeployment(match))}/>} {match.phase==='deployment'&&<DeploymentPanel match={match} onPick={(id)=>setMatch({...match, selectedDeployUnitId:id})}/>}<section className="gamegrid"><BattleBoard match={match} moveTargets={moves} attackTargets={attacks} onTile={clickTile}/><aside className="side"><Info unit={selectedUnit ?? activeUnit} tile={selectedTile}/><section className="card"><h2>动作按钮区</h2>{match.mode==='AI vs AI'||match.activeSquad!==match.playerSquad?<button disabled={match.phase!=='unit_action'} onClick={()=>setMatch(runAI(match))}>执行AI一步</button>:<button disabled={match.phase!=='unit_action'} onClick={()=>setMatch(endTurn(match))}>结束行动</button>}<p>移动：点击高亮格。攻击：点击高亮敌方。</p></section><AIPanel decision={match.aiDecisionLog[0]} visible={match.mode==='AI vs AI'}/></aside></section><BattleLog logs={match.logs}/></main>;
+  const [mode, setMode] = React.useState<Mode>('AI vs AI');
+  const [mapId, setMapId] = React.useState<MapId>('test_map_a');
+  const [match, setMatch] = React.useState<Match>(() => createMatch('AI vs AI', 'test_map_a'));
+  React.useEffect(() => save(match), [match]);
+  const config = mapConfigs[match.mapId];
+  const validation = validateMap(match.mapId);
+  const selectedUnit = match.units.find((u) => u.id === match.selectedUnitId) ?? null;
+
+  function start() { setMatch(createMatch(mode, mapId)); }
+  function startDeployment() { if (!validation.ok) return; setMatch(log({ ...match, phase: 'deployment' }, 'deployment_start', '进入部署阶段')); }
+  function runAiStep() { setMatch((m) => log(m, 'ai_decision', 'AI执行一步：当前为本地调试占位')); }
+  function runAiFull() { setMatch((m) => log({ ...m, phase: 'match_end', result: 'AI本地调试结束' }, 'match_end', 'AI跑完整局：当前为本地调试占位')); }
+  function runAi1000() { localStorage.setItem('xiyao_ai_stats', JSON.stringify({ games: 1000, note: '本地统计占位，待接入正式AI评分表' })); setMatch((m) => log(m, 'ai_decision', '本地1000局测试完成：统计已写入LocalStorage')); }
+
+  return <main className="shell">
+    <header className="phase"><b>阶段：{match.phase}</b><span>大回合：{match.round || '-'}</span><span>行动方：{squads[match.activeSquad].name}</span><span>模式：{match.mode}</span><span>地图：{match.mapId}</span><span>本地保存：LocalStorage</span></header>
+    <section className="homebar"><div className="field"><span>模式</span><select value={mode} onChange={(e) => setMode(e.target.value as Mode)}><option>玩家 vs AI</option><option>AI vs AI</option></select></div><div className="field"><span>地图</span><select value={mapId} onChange={(e) => setMapId(e.target.value as MapId)}><option value="test_map_a">test_map_a</option><option value="test_map_b">test_map_b</option><option value="test_map_c">test_map_c</option></select></div><button onClick={start}>创建对局 / 进入预览</button></section>
+    {match.phase === 'map_preview' && <section className="card preview"><h2>地图预览</h2><p>{config.name}</p><p>{config.typeNote}</p><p>部署区：青丘 {validation.qingqiuDeployment} / 天门 {validation.tianmenDeployment}</p><p className={validation.ok ? 'ok' : 'bad'}>校验结果：{validation.ok ? '通过' : validation.errors.join('；')}</p><button disabled={!validation.ok} onClick={startDeployment}>开始部署</button></section>}
+    {match.phase === 'deployment' && <section className="card deployment"><h2>部署阶段</h2><p>当前版本使用本地配置自动部署，后续改为逐个点击部署。</p><button onClick={() => setMatch(deployAll(match))}>自动部署双方</button></section>}
+    <section className="gamegrid"><section className="map"><div className="board">{match.tiles.map((tile) => { const unit = match.units.find((u) => u.tileId === tile.id); return <button key={tile.id} className={`hex ${tile.terrainLayer} ${tile.deploymentOwner ? `deploy-${tile.deploymentOwner}` : ''}`} style={{ left: 360 + tile.q * 82 + tile.r * 41, top: 210 + tile.r * 70 }} onClick={() => setMatch({ ...match, selectedUnitId: unit?.id ?? null })}><span className="terrainLayer">{terrainIcon[tile.terrainLayer]}</span><span className="coord">{tile.id}</span>{tile.objectiveOwner && <span className="owner">{tile.objectiveOwner === 'neutral' ? '中立' : squads[tile.objectiveOwner].mark}</span>}{unit && <span className={`unitLayer ${unit.squad}`}>{squads[unit.squad].mark}<i>{unit.name.slice(0, 1)}</i></span>}</button>; })}</div></section><aside className="side"><section className="card"><h2>单位信息</h2>{selectedUnit ? <><p>{selectedUnit.name}｜{squads[selectedUnit.squad].name}</p><p>HP {selectedUnit.hp} ｜ AP {selectedUnit.ap}</p></> : <p>未选中单位</p>}<h2>动作按钮区</h2><button disabled={match.phase !== 'unit_action'} onClick={runAiStep}>执行AI一步</button><button disabled={match.phase === 'match_end'} onClick={runAiFull}>AI跑完整局</button><button onClick={runAi1000}>本地1000局测试</button></section><section className="card ai"><h2>AI决策面板</h2><p>等待接入正式 AI行为评分表.md。</p></section></aside></section>
+    <footer className="log"><strong>战斗日志</strong>{match.logs.map((item, i) => <p key={`${item.type}-${i}`}><b>{item.type}</b>｜{item.message}</p>)}</footer>
+  </main>;
 }
-function PhaseHeader({match,activeUnit}:{match:MatchState;activeUnit:Unit|null}){return <header className="phase"><b>阶段：{match.phase}</b><span>大回合：{match.round||'-'}/3</span><span>行动方：{squads[match.activeSquad].name}</span><span>行动单位：{activeUnit?.name??'-'}</span><span>AP：{activeUnit?.ap??'-'}</span><span>模式：{match.mode}</span><span>地图：{match.mapId}</span></header>}
-function MapPreview({match,onStart}:{match:MatchState;onStart:()=>void}){const v=match.validation;return <section className="card preview"><h2>地图预览</h2><p>{match.mapId}｜{mapNotes[match.mapId]}</p><div className="stats">{terrainIds.map((id)=><span key={id}>{terrainView[id].name}：{v.stats[id]}</span>)}</div><p>据点：中央 {v.centralObjectives} / 边缘 {v.edgeObjectives}</p><p>部署区：青丘 {v.qingqiuDeployment} / 天门 {v.tianmenDeployment}</p><p className={v.ok?'ok':'bad'}>校验：{v.ok?'通过':'失败'}</p>{!v.ok&&<ul>{v.errors.map((e)=><li key={e}>{e}</li>)}</ul>}<button disabled={!v.ok} onClick={onStart}>开始部署</button></section>}
-function DeploymentPanel({match,onPick}:{match:MatchState;onPick:(id:string)=>void}){return <section className="card deployment"><h2>部署阶段</h2><div className="deployCols">{(['qingqiu','tianmen'] as SquadId[]).map((s)=><div key={s}><h3>{squads[s].name}</h3>{match.units.filter((u)=>u.squad===s).map((u)=><button key={u.id} disabled={u.deployed} className={match.selectedDeployUnitId===u.id?'picked':''} onClick={()=>onPick(u.id)}>{u.name} {u.deployed?`已部署 ${u.tileId}`:'待部署'}</button>)}</div>)}</div><p>点击己方部署区格子放置选中单位。</p></section>}
-function getHexPosition(q:number,r:number){const HEX_W=72;const HEX_H=64;return {x:(q+r*0.5)*HEX_W,y:r*HEX_H*0.75}}
-function BattleBoard({match,moveTargets,attackTargets,onTile}:{match:MatchState;moveTargets:string[];attackTargets:string[];onTile:(tile:Tile)=>void}){const occ=occupied(match);return <section className="map"><div className="boardViewport"><div className="board">{match.tiles.map((tile)=>{const u=occ.get(tile.id);const p=getHexPosition(tile.q,tile.r);const cls=['hex',tile.terrainLayer,tile.deploymentOwner?`deploy-${tile.deploymentOwner}`:'',match.selectedTileId===tile.id?'selected':'',moveTargets.includes(tile.id)?'moveable':'',attackTargets.includes(tile.id)?'attackable':''].join(' ');return <button key={tile.id} className={cls} style={{left:`calc(50% + ${p.x}px)`,top:`calc(50% + ${p.y}px)`}} onClick={()=>onTile(tile)}><span className="terrainLayer">{terrainView[tile.terrainLayer].icon}</span><span className="coord">{tile.id}</span>{tile.objectiveOwner&&<span className="owner">{tile.objectiveOwner==='neutral'?'中立':squads[tile.objectiveOwner].mark}</span>}<span className="statusLayer">{tile.statusLayer.map((s)=><b key={s}>{statusMark[s]}</b>)}</span>{u&&<span className={`unitLayer ${u.squad}`}>{squads[u.squad].mark}<i>{u.name.slice(0,1)}</i><em>{u.statusLayer.map((s)=>statusMark[s]).join('')}</em></span>}<span className="highlightLayer"/></button>})}</div></div></section>}
-function Info({unit,tile}:{unit:Unit|null;tile:Tile|null}){return <section className="card"><h2>单位信息</h2>{unit?<><p>{unit.name}｜{squads[unit.squad].name}</p><p>HP {unit.hp}/{unit.maxHp}｜AP {unit.ap}</p><p>状态：{unit.statusLayer.join('、')||'无'}</p><p>核心技能：{unit.coreSkill}</p></>:<p>未选中单位</p>}<h3>格子信息</h3>{tile?<p>{tile.id}｜{terrainView[tile.terrainLayer].name}｜部署：{tile.deploymentOwner?squads[tile.deploymentOwner].name:'无'}｜据点：{tile.objectiveOwner??'无'}</p>:<p>未选中格</p>}</section>}
-function AIPanel({decision,visible}:{decision?:AIDecision;visible:boolean}){if(!visible)return null;return <section className="card ai"><h2>AI决策面板</h2>{decision?<><p>单位：{decision.unitName}</p><p>最终选择：{decision.selected?.label} / 总分 {decision.totalScore}</p>{decision.candidates.map((c)=><div key={c.id} className="candidate"><b>{c.label} {c.score}</b><small>目标分 {c.breakdown.目标分} / 位置分 {c.breakdown.位置分} / 资源分 {c.breakdown.资源分} / 状态分 {c.breakdown.状态分} / 据点分 {c.breakdown.据点分} / 协同分 {c.breakdown.协同分} / 击杀分 {c.breakdown.击杀分} / 生存分 {c.breakdown.生存分}</small></div>)}</>:<p>等待AI行动。</p>}</section>}
-function BattleLog({logs}:{logs:Log[]}){return <footer className="log"><strong>战斗日志</strong>{logs.map((l,i)=><p key={`${l.type}-${i}`}><b>{l.type}</b>｜{l.message}</p>)}</footer>}
 
 createRoot(document.getElementById('root')!).render(<App />);
