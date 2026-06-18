@@ -20,51 +20,37 @@
 
 当前 MVP 的所有有效设计文档统一从这里进入：
 
-- [game_design/README.md](game_design/README.md)
+- [游戏/游戏设定/README.md](游戏/游戏设定/README.md)
 
 ---
 
 # 当前仓库结构
 
 ```text
-game_design/
-  README.md
-  核心标签系统.md
-  规则总表.md
-  战斗骰子系统.md
-  地形系统.md
-  游戏流程与初始设置.md
-  MVP可玩闭环.md
-  命名规范.md
-  设定审计总表.md
-  单人战役.md
-
-  小队/
-    青丘使团/
-      README.md
-      单位与数值.md
-      人物志.md
-
-    天门执法队/
-      README.md
-      单位与数值.md
-      人物志.md
-
-  世界观/
-    世界观词条.md
-    四象体系.md
-    天门.md
-    青丘.md
-    暮君.md
-
-archive/
-  mvp_out_of_scope/
-    systems/
-    story/
-    progression/
-    economy/
-    experiments/
+世界观/
+小说/
+游戏/
+  游戏设定/
+  程序代码/
+    frontend/
+    backend/
+    shared/
+    docs/
+  数据库/
+    schema/
+    sql/
+    seeds/
+  测试/
+归档/
+README.md
 ```
+
+目录结构
+
+世界观
+小说
+游戏
+归档
 
 ---
 
@@ -92,4 +78,4 @@ archive/
 
 当前版本只验证可玩闭环。
 
-百宝锦囊、宝物、妙计、阵型、法术、化形、天门威仪、命运系统等未来扩展，统一归档到 `archive/mvp_out_of_scope/`，不作为 MVP 规则来源。
+百宝锦囊、宝物、妙计、阵型、法术、化形、天门威仪、命运系统等未来扩展，统一归档到 `归档/mvp_out_of_scope/`，不作为 MVP 规则来源。

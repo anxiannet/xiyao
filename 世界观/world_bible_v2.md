@@ -784,14 +784,14 @@ V2 版本重点修正并完善了一个关键设定：
 建议继续拆分为：
 
 ```text
-lore/
+世界观/
   world_bible_v2.md
   history_timeline.md
   factions_v1.md
   regions_v1.md
   power_system_v1.md
 
-game_design/
+游戏/游戏设定/
   core_rules_v1.md
   warbands_v1.md
   maps_v1.md

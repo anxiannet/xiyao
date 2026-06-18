@@ -6,7 +6,7 @@
 
 当前唯一有效入口：
 
-- `game_design/README.md`
+- `游戏/游戏设定/README.md`
 
 ---
 
@@ -37,11 +37,11 @@
 
 当前 MVP 世界观已整理到：
 
-- `game_design/世界观/世界观词条.md`
-- `game_design/世界观/四象体系.md`
-- `game_design/世界观/天门.md`
-- `game_design/世界观/青丘.md`
-- `game_design/世界观/暮君.md`
+- `游戏/游戏设定/世界观/世界观词条.md`
+- `游戏/游戏设定/世界观/四象体系.md`
+- `游戏/游戏设定/世界观/天门.md`
+- `游戏/游戏设定/世界观/青丘.md`
+- `游戏/游戏设定/世界观/暮君.md`
 
 ## progression/
 
@@ -69,7 +69,7 @@
 
 # 已被替代的旧版本文档
 
-以下旧版本不应出现在 active `game_design/` 中：
+以下旧版本不应出现在 active `游戏/游戏设定/` 中：
 
 - `warbands_v1`
 - `heroes_v1`
@@ -83,7 +83,7 @@
 
 # 读取规则
 
-1. Codex / GPT / 开发者默认只读取 `game_design/README.md`。
+1. Codex / GPT / 开发者默认只读取 `游戏/游戏设定/README.md`。
 2. 本目录不作为当前规则来源。
-3. 本目录内容如需恢复，必须重新整理进 `game_design/` 并更新 `设定审计总表.md`。
+3. 本目录内容如需恢复，必须重新整理进 `游戏/游戏设定/` 并更新 `设定审计总表.md`。
 4. 任何新增 future / future_expansion 文档，默认进入本目录对应分类。
