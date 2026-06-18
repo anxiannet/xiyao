@@ -11,7 +11,13 @@
 
 ---
 
-# 当前配置表
+# 表类型边界
+
+## 配置表
+
+配置表用于保存游戏设定数据。
+
+当前配置表：
 
 ```text
 xiyao_cfg_squads
@@ -22,6 +28,18 @@ xiyao_cfg_terrains
 xiyao_cfg_decrees
 xiyao_cfg_maps
 xiyao_cfg_map_tiles
+```
+
+## 运行表
+
+运行表用于保存对局运行状态、事件日志、AI 对战结果与回放数据。
+
+当前尚未建立运行表。
+
+后续运行表统一使用：
+
+```text
+xiyao_match_*
 ```
 
 ---
