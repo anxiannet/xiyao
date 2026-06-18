@@ -11,14 +11,31 @@
 - 状态显示
 - 战斗日志
 
-后续目录：
+入口文件：
 
 ```text
-web/
-├─ src
-├─ docs
-├─ package.json
-├─ tsconfig.json
-├─ vite.config.ts
-└─ index.html
+index.html
+src/main.tsx
+src/styles.css
 ```
+
+交互与视觉规范：
+
+```text
+docs/MVP自由对战前端交互原型.md
+```
+
+运行：
+
+```bash
+npm install
+npm run dev
+```
+
+当前禁止接入：
+
+- Supabase
+- 后端 API
+- AI逻辑
+- 规则引擎
+- 联网对战
