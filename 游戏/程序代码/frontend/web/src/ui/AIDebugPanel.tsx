@@ -42,7 +42,7 @@ export default function AIDebugPanel({ match, stats, aiBatchProgress }: { match:
   const normalTotal = Math.max(0, total - abnormal);
   return (
     <section className="card ai">
-      <details>
+      <details open>
         <summary>AI决策面板</summary>
         <div className="aiBatch">
           <h3>本地测试进度</h3>

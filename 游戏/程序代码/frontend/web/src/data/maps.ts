@@ -38,11 +38,11 @@ const terrainByCode: Record<string, TerrainId> = {
 
 const layout = [
   ['OB', 'EO', 'P', 'EO', 'OB'],
-  ['TP', 'P', 'H', 'P', 'TP'],
-  ['TP', 'S', 'P', 'S', 'TP'],
-  ['P', 'R', 'CO', 'R', 'P'],
-  ['QP', 'S', 'P', 'S', 'QP'],
-  ['QP', 'P', 'H', 'P', 'QP'],
+  ['TP', 'TP', 'H', 'TP', 'TP'],
+  ['P', 'S', 'P', 'S', 'P'],
+  ['R', 'P', 'CO', 'P', 'R'],
+  ['P', 'S', 'P', 'S', 'P'],
+  ['QP', 'QP', 'H', 'QP', 'QP'],
   ['OB', 'EO', 'P', 'EO', 'OB'],
 ] as const;
 
@@ -66,7 +66,7 @@ export const mapConfigs: Record<MapId, MapConfig> = {
   tutorial_battlefield: {
     id: 'tutorial_battlefield',
     name: 'tutorial_battlefield｜青丘对天门正式测试地图',
-    typeNote: '5列x7行正式测试图：中央据点为主战场，边缘据点牵引侧翼，黄昏裂隙检验律令价值。',
+    typeNote: '5列x7行正式测试图：上方天门阵地、中部中央争夺区、下方青丘阵地；高台为阵地输出位，裂隙为中央两侧律令价值区。',
     tiles: tutorialTiles,
   },
 };

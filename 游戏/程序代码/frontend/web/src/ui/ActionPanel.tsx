@@ -3,8 +3,6 @@ import type { GameAction } from '../engine/rules';
 export default function ActionPanel({
   actions,
   onAction,
-  onAIStep,
-  onAIFull,
   locked,
 }: {
   actions: GameAction[];
@@ -22,24 +20,13 @@ export default function ActionPanel({
   };
 
   return (
-    <section className="card actionPanel">
-      <h2>动作栏</h2>
+    <section className="actionPanel actionBar">
       <div className="quickActions">
-        <button disabled={locked || !grouped.move} onClick={() => grouped.move && onAction(grouped.move)}>移动</button>
-        <button disabled={locked || !grouped.attack} onClick={() => grouped.attack && onAction(grouped.attack)}>攻击</button>
-        <button disabled={locked || !grouped.skill} onClick={() => grouped.skill && onAction(grouped.skill)}>技能</button>
-        <button disabled={locked || !grouped.capture} onClick={() => grouped.capture && onAction(grouped.capture)}>占领</button>
-        <button disabled={locked || !grouped.end} onClick={() => grouped.end && onAction(grouped.end)}>结束</button>
-      </div>
-      <details>
-        <summary>可执行动作</summary>
-        <div className="actionList">
-        {actions.map((action) => <button disabled={locked} key={action.id} onClick={() => onAction(action)}>{locked ? '测试运行中...' : action.label}</button>)}
-        </div>
-      </details>
-      <div className="aiButtons">
-        <button disabled={locked} onClick={onAIStep}>{locked ? '测试运行中...' : 'AI一步'}</button>
-        <button disabled={locked} onClick={onAIFull}>{locked ? '测试运行中...' : 'AI跑完整局'}</button>
+        <button className="actionButton" disabled={locked || !grouped.move} onClick={() => grouped.move && onAction(grouped.move)}><b>↗</b><span>移动</span></button>
+        <button className="actionButton" disabled={locked || !grouped.attack} onClick={() => grouped.attack && onAction(grouped.attack)}><b>⚔</b><span>攻击</span></button>
+        <button className="actionButton" disabled={locked || !grouped.skill} onClick={() => grouped.skill && onAction(grouped.skill)}><b>✦</b><span>技能</span></button>
+        <button className="actionButton" disabled={locked || !grouped.capture} onClick={() => grouped.capture && onAction(grouped.capture)}><b>◆</b><span>占领</span></button>
+        <button className="actionButton" disabled={locked || !grouped.end} onClick={() => grouped.end && onAction(grouped.end)}><b>✓</b><span>结束</span></button>
       </div>
     </section>
   );

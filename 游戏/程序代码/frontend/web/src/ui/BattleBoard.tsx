@@ -1,7 +1,7 @@
 import React from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { terrainName, type DecreeId, type GameAction, type MatchState, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
-import terrainCentralObjectiveNeutralUrl from '../assets/split-terrain/terrain_central_objective_neutral.png';
+import terrainCentralObjectiveNeutralUrl from '../assets/tiles/central-objective-200.png';
 import terrainCentralObjectiveQingqiuUrl from '../assets/split-terrain/terrain_central_objective_qingqiu.png';
 import terrainCentralObjectiveTianmenUrl from '../assets/split-terrain/terrain_central_objective_tianmen.png';
 import terrainCoverShadowUrl from '../assets/split-terrain/terrain_cover_shadow.png';
@@ -11,7 +11,7 @@ import terrainEdgeObjectiveQingqiuUrl from '../assets/split-terrain/terrain_edge
 import terrainEdgeObjectiveTianmenUrl from '../assets/split-terrain/terrain_edge_objective_tianmen.png';
 import terrainHighGroundUrl from '../assets/split-terrain/terrain_high_ground.png';
 import terrainObstacleUrl from '../assets/split-terrain/terrain_obstacle_ruined_wall.png';
-import terrainPlainUrl from '../assets/split-terrain/terrain_plain_stone.png';
+import terrainPlainUrl from '../assets/tiles/plain-grass-200.png';
 import statusFoxfireRemnantUrl from '../assets/split-terrain/status_foxfire_remnant.png';
 import statusInspectionZoneUrl from '../assets/split-terrain/status_inspection_zone.png';
 import sulingLeftBackUrl from '../assets/units/suling/suling_left_back.png';
@@ -254,7 +254,13 @@ export default function BattleBoard({
       const { x, y } = gridProject(tile.q, tile.r);
       const tileGraphic = new Graphics();
       const colors = tileColors[tile.terrainLayer];
-      drawHex(tileGraphic, colors.fill, colors.line);
+      const lineColor = tile.deploymentOwner ? squadColors[tile.deploymentOwner].line : colors.line;
+      if (tile.terrainLayer === 'plain') {
+        drawHex(tileGraphic, colors.fill, lineColor, 0.01);
+        tileGraphic.alpha = tile.deploymentOwner ? 0.42 : 0.18;
+      } else {
+        drawHex(tileGraphic, colors.fill, lineColor);
+      }
       tileGraphic.position.set(x, y);
       tileGraphic.eventMode = locked ? 'none' : 'static';
       tileGraphic.cursor = locked ? 'default' : 'pointer';
@@ -277,9 +283,11 @@ export default function BattleBoard({
         layers.terrain.addChild(rim);
       }
 
-      const label = makeText(tile.deploymentOwner ? squadColors[tile.deploymentOwner].mark : colors.label, tile.terrainLayer === 'central_objective' ? 24 : 18);
-      label.position.set(x, y - 2);
-      layers.terrain.addChild(label);
+      if (tile.terrainLayer !== 'plain') {
+        const label = makeText(tile.deploymentOwner ? squadColors[tile.deploymentOwner].mark : colors.label, tile.terrainLayer === 'central_objective' ? 24 : 18);
+        label.position.set(x, y - 2);
+        layers.terrain.addChild(label);
+      }
 
       const name = makeText(terrainName[tile.terrainLayer], 9, 0xf3dfad);
       name.alpha = viewMode === 'tactical' ? 0.9 : 0.38;

@@ -14,8 +14,6 @@ import ActionPanel from './ActionPanel';
 import AIDebugPanel from './AIDebugPanel';
 import BattleBoard from './BattleBoard';
 import BattleLog from './BattleLog';
-import DeploymentPanel from './DeploymentPanel';
-import MapPreview from './MapPreview';
 import PhaseHeader from './PhaseHeader';
 import UnitInfoPanel from './UnitInfoPanel';
 import type { AIBatchProgress } from '../ai/aiSimulator';
@@ -33,10 +31,14 @@ function detectDecreeEffect(logMessage: string): DecreeId | null {
 
 export default function App() {
   const [selectedDeployUnitId, setSelectedDeployUnitId] = React.useState<string | null>(null);
+  const [drawer, setDrawer] = React.useState<'log' | 'ai' | null>(null);
   const [stats] = React.useState<unknown>(() => loadAIStats());
   const [effect, setEffect] = React.useState<DecreeId | null>(null);
   const [match, setMatch] = React.useState<MatchState>(() => createMatch(FIXED_MODE, FIXED_MAP_ID, FIXED_PLAYER_SQUAD));
   const legalActions = React.useMemo(() => generateLegalActions(match), [match]);
+  const validation = React.useMemo(() => validateMap(mapConfigs[match.mapId]), [match.mapId]);
+  const playerDeployUnits = match.units.filter((unit) => unit.squad === match.playerSquad && !unit.summon);
+  const allDeployed = allFormalUnitsDeployed(match);
   const aiBatchProgress = React.useMemo<AIBatchProgress>(() => ({
     running: false,
     total: 1000,
@@ -98,9 +100,9 @@ export default function App() {
   }
 
   return (
-    <main className="battleScreen">
+    <main className="battleScreen battleApp">
       <PhaseHeader match={match} />
-      <section className="battleMain">
+      <section className="battlefieldLayer">
         <BattleBoard
           locked={false}
           match={match}
@@ -110,24 +112,50 @@ export default function App() {
           onSelectUnit={selectUnit}
           onDeployTile={deployToTile}
         />
-        <section className="belowMap">
-          {match.phase === 'map_preview' && <MapPreview locked={false} mapId={match.mapId} onStartDeployment={startDeployment} />}
-          {match.phase === 'deployment' && (
-            <DeploymentPanel
-              locked={false}
-              match={match}
-              selectedDeployUnitId={selectedDeployUnitId}
-              onPickUnit={setSelectedDeployUnitId}
-              onAutoDeployAI={() => setMatch((current) => autoDeploySquad(current, 'tianmen'))}
-              onStartRound={startRound}
-            />
-          )}
-          <UnitInfoPanel match={match} />
-          <ActionPanel actions={legalActions} locked={false} onAction={executeAction} onAIStep={aiStep} onAIFull={aiFull} />
-          <AIDebugPanel match={match} stats={stats} aiBatchProgress={aiBatchProgress} />
-          <BattleLog match={match} />
-        </section>
       </section>
+      {match.phase === 'map_preview' && (
+        <div className="phasePrompt">
+          <span className={validation.ok ? 'ok' : 'bad'}>{validation.ok ? '地图校验通过' : validation.errors.join('；')}</span>
+          <button className="primaryBattleButton" disabled={!validation.ok} onClick={startDeployment}>开始部署</button>
+        </div>
+      )}
+      {match.phase === 'deployment' && (
+        <section className="deployActionBar actionBar">
+          <div className="deployRoster">
+            {playerDeployUnits.map((unit) => (
+              <button
+                className={`deployChip ${selectedDeployUnitId === unit.id ? 'picked' : ''}`}
+                disabled={unit.deployed}
+                key={unit.id}
+                onClick={() => setSelectedDeployUnitId(unit.id)}
+              >
+                <b>{unit.name.slice(0, 1)}</b>
+                <span>{unit.deployed ? '已部署' : unit.name}</span>
+              </button>
+            ))}
+          </div>
+          <button className="primaryBattleButton compact" disabled={!allDeployed} onClick={startRound}>开战</button>
+        </section>
+      )}
+      {match.phase !== 'map_preview' && match.phase !== 'deployment' && (
+        <ActionPanel actions={legalActions} locked={false} onAction={executeAction} onAIStep={aiStep} onAIFull={aiFull} />
+      )}
+      <UnitInfoPanel match={match} />
+      <div className="floatingTools">
+        <button onClick={() => setDrawer((current) => current === 'log' ? null : 'log')}>日志</button>
+        <button onClick={() => setDrawer((current) => current === 'ai' ? null : 'ai')}>AI</button>
+      </div>
+      {drawer && (
+        <section className="debugDrawer">
+          <header>
+            <b>{drawer === 'log' ? '战斗日志' : 'AI决策'}</b>
+            <button onClick={() => setDrawer(null)}>关闭</button>
+          </header>
+          <div className="debugDrawerBody">
+            {drawer === 'log' ? <BattleLog match={match} /> : <AIDebugPanel match={match} stats={stats} aiBatchProgress={aiBatchProgress} />}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
