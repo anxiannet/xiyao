@@ -1,8 +1,45 @@
 import type { AIBatchProgress } from '../ai/aiSimulator';
 import type { MatchState } from '../engine/rules';
 
+type StatsSummary = {
+  totalGames?: number;
+  qingqiuWins?: number;
+  tianmenWins?: number;
+  draws?: number;
+  abnormalGames?: number;
+  averageRounds?: number;
+  averageKills?: number;
+  averageCaptures?: number;
+  averageSkillUses?: number;
+  firstActorWinRate?: number;
+};
+
+function getSummary(stats: unknown): StatsSummary | null {
+  if (!stats || typeof stats !== 'object') return null;
+  const value = stats as { summary?: unknown };
+  const summary = value.summary;
+  if (summary && typeof summary === 'object' && 'summary' in summary) {
+    return (summary as { summary?: StatsSummary }).summary ?? null;
+  }
+  return summary && typeof summary === 'object' ? summary as StatsSummary : null;
+}
+
+function percent(value: number, total: number): string {
+  if (!total) return '0%';
+  return `${Math.round((value / total) * 1000) / 10}%`;
+}
+
+function rate(value?: number): string {
+  if (typeof value !== 'number') return '0%';
+  return `${Math.round(value * 1000) / 10}%`;
+}
+
 export default function AIDebugPanel({ match, stats, aiBatchProgress }: { match: MatchState; stats: unknown; aiBatchProgress: AIBatchProgress }) {
   const latest = match.aiDecisions[0];
+  const summary = getSummary(stats);
+  const total = summary?.totalGames ?? 0;
+  const abnormal = summary?.abnormalGames ?? 0;
+  const normalTotal = Math.max(0, total - abnormal);
   return (
     <section className="card ai">
       <h2>AI决策面板</h2>
@@ -31,7 +68,23 @@ export default function AIDebugPanel({ match, stats, aiBatchProgress }: { match:
           ))}
         </>
       ) : <p>等待 AI 决策。</p>}
-      {stats ? <pre className="statsJson">{JSON.stringify(stats, null, 2).slice(0, 1600)}</pre> : null}
+      <div className="aiStatsCard">
+        <h3>AI统计</h3>
+        {summary ? (
+          <div className="statGrid compact">
+            <span><b>{total}</b><small>总对局数</small></span>
+            <span><b className="qingqiuText">{percent(summary.qingqiuWins ?? 0, normalTotal)}</b><small>青丘胜率</small></span>
+            <span><b className="tianmenText">{percent(summary.tianmenWins ?? 0, normalTotal)}</b><small>天门胜率</small></span>
+            <span><b>{percent(summary.draws ?? 0, normalTotal)}</b><small>平局率</small></span>
+            <span><b>{abnormal}</b><small>异常局</small></span>
+            <span><b>{summary.averageRounds ?? 0}</b><small>平均回合</small></span>
+            <span><b>{summary.averageKills ?? 0}</b><small>平均击杀</small></span>
+            <span><b>{summary.averageCaptures ?? 0}</b><small>平均占点</small></span>
+            <span><b>{summary.averageSkillUses ?? 0}</b><small>平均技能</small></span>
+            <span><b>{rate(summary.firstActorWinRate)}</b><small>先手胜率</small></span>
+          </div>
+        ) : <p className="muted">暂无统计</p>}
+      </div>
     </section>
   );
 }

@@ -1,7 +1,9 @@
+import React from 'react';
 import { terrainIcon, tileStatusName, squads, type GameAction, type MatchState } from '../engine/rules';
 
-const HEX_W = 96;
-const HEX_H = 110;
+const HEX_W = 76;
+const HEX_H = 88;
+const BOARD_PADDING = 24;
 
 function getTilePixel(tile: { q: number; r: number }) {
   return {
@@ -28,26 +30,45 @@ export default function BattleBoard({
   match,
   legalActions,
   selectedDeployUnitId,
+  locked,
   onSelectUnit,
   onDeployTile,
 }: {
   match: MatchState;
   legalActions: GameAction[];
   selectedDeployUnitId: string | null;
+  locked: boolean;
   onSelectUnit: (unitId: string | null) => void;
   onDeployTile: (tileId: string) => void;
 }) {
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
+  const [boardScale, setBoardScale] = React.useState(1);
   const moveTargets = new Set(legalActions.filter((action) => action.type === 'move' || action.skillId === 'fox_step').map((action) => action.targetTileId));
   const attackTargets = new Set(legalActions.filter((action) => action.type === 'attack' || action.skillId === 'disturb_string').map((action) => action.targetUnitId));
   const boardBounds = getBoardBounds(match.tiles);
+
+  React.useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return undefined;
+    const updateScale = () => {
+      const availableWidth = viewport.clientWidth - BOARD_PADDING;
+      setBoardScale(Math.min(1, availableWidth / boardBounds.width));
+    };
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [boardBounds.width]);
+
   return (
-    <section className="map">
-      <div className="boardViewport">
-        <div className="boardScene">
-          <div className="board" style={{ width: boardBounds.width, height: boardBounds.height }}>
+    <section className={`map ${locked ? 'locked' : ''}`}>
+      <div className="boardViewport" ref={viewportRef}>
+        <div className="boardScene" style={{ height: boardBounds.height * boardScale + BOARD_PADDING, width: boardBounds.width * boardScale + BOARD_PADDING }}>
+          <div className="board" style={{ width: boardBounds.width, height: boardBounds.height, transform: `scale(${boardScale})`, transformOrigin: 'top left' }}>
             {match.tiles.map((tile) => {
               const unit = match.units.find((item) => item.tileId === tile.id && !item.defeated);
-              const canDeploy = match.phase === 'deployment' && selectedDeployUnitId && tile.deploymentOwner === match.playerSquad && !unit && tile.terrainLayer !== 'obstacle';
+              const selectedDeployUnit = match.units.find((item) => item.id === selectedDeployUnitId);
+              const canDeploy = match.phase === 'deployment' && selectedDeployUnit && tile.deploymentOwner === selectedDeployUnit.squad && !unit && tile.terrainLayer !== 'obstacle';
               const selected = unit?.id === match.selectedUnitId;
               const attackable = unit ? attackTargets.has(unit.id) : false;
               const pixel = getTilePixel(tile);
@@ -60,7 +81,12 @@ export default function BattleBoard({
                     top: pixel.y - boardBounds.minY,
                     zIndex: selected ? 500 : Math.round(pixel.y - boardBounds.minY),
                   }}
-                  onClick={() => (canDeploy ? onDeployTile(tile.id) : onSelectUnit(unit?.id ?? null))}
+                  disabled={locked}
+                  onClick={() => {
+                    if (locked) return;
+                    if (canDeploy) onDeployTile(tile.id);
+                    else onSelectUnit(unit?.id ?? null);
+                  }}
                 >
                   <span className="terrainLayer">{terrainIcon[tile.terrainLayer]}</span>
                   <span className="coord">{tile.id}</span>
