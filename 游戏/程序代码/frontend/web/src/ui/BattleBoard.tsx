@@ -7,7 +7,7 @@ type ViewMode = 'battle' | 'tactical';
 const GRID_W = 104;
 const GRID_H = 86;
 const GRID_X_STEP = 84;
-const GRID_Y_STEP = 62;
+const GRID_Y_STEP = 54;
 
 const tileColors: Record<TerrainId, { fill: number; line: number; label: string }> = {
   plain: { fill: 0x6b6f68, line: 0xc9a86a, label: '□' },
