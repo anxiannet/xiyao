@@ -20,11 +20,11 @@ export function validateMap(config: MapConfig): MapValidationResult {
   const centralObjectives = config.tiles.filter((tile) => tile.terrain === 'central_objective').length;
   const edgeObjectives = config.tiles.filter((tile) => tile.terrain === 'edge_objective').length;
 
-  if (config.tiles.length !== 25) errors.push('地图必须为25格');
+  if (config.tiles.length !== 35) errors.push('tutorial_battlefield 必须为35格');
   if (ids.size !== config.tiles.length) errors.push('格子ID必须唯一');
   if (coordinateKeys.size !== config.tiles.length) errors.push('坐标必须唯一');
-  if (qingqiuDeployment < 5) errors.push('青丘部署格不少于5');
-  if (tianmenDeployment < 5) errors.push('天门部署格不少于5');
+  if (qingqiuDeployment !== 4) errors.push('青丘部署格必须为4');
+  if (tianmenDeployment !== 4) errors.push('天门部署格必须为4');
   if (centralObjectives < 1) errors.push('至少1个中央据点');
   if (edgeObjectives < 1) errors.push('至少1个边缘据点');
 
@@ -35,6 +35,6 @@ export function validateMap(config: MapConfig): MapValidationResult {
   }
 
   const deploymentCounts: Record<SquadId, number> = { qingqiu: qingqiuDeployment, tianmen: tianmenDeployment };
-  if (deploymentCounts.qingqiu > 6 || deploymentCounts.tianmen > 6) warnings.push('部署格超过推荐值6，可读性需重点检查');
+  if (deploymentCounts.qingqiu < 4 || deploymentCounts.tianmen < 3) warnings.push('部署格低于当前固定小队人数');
   return { ok: errors.length === 0, errors, warnings, qingqiuDeployment, tianmenDeployment, centralObjectives, edgeObjectives };
 }

@@ -10,7 +10,7 @@ export default function MapPreview({ mapId, locked, onStartDeployment }: { mapId
       <p>{config.name}</p>
       <p>{config.typeNote}</p>
       <div className="stats">
-        <span>格子 {config.tiles.length}/25</span>
+        <span>格子 {config.tiles.length}/35</span>
         <span>青丘部署 {validation.qingqiuDeployment}</span>
         <span>天门部署 {validation.tianmenDeployment}</span>
         <span>中央据点 {validation.centralObjectives}</span>

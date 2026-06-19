@@ -140,3 +140,200 @@ select, button { padding: 9px 11px; }
   .terrainLayer { font-size: 24px; }
   .owner { font-size: 12px; }
 }
+
+.battleScreen {
+  min-height: 100vh;
+  padding: 8px 8px 112px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(201,168,106,.16), transparent 26%),
+    linear-gradient(180deg, #2a313b 0%, #151a20 100%);
+}
+
+.battleMain {
+  display: grid;
+  gap: 8px;
+}
+
+.phase {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  justify-content: space-between;
+  border-radius: 8px;
+  background: rgba(24, 29, 36, 0.96);
+}
+
+.pixiMap {
+  height: 64vh;
+  min-height: 420px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pixiHost {
+  position: absolute;
+  inset: 0;
+}
+
+.pixiHost canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.viewSwitch {
+  position: absolute;
+  z-index: 4;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.viewSwitch button {
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(12,16,22,.78);
+  backdrop-filter: blur(8px);
+}
+
+.viewSwitch button.active {
+  border-color: #c9a86a;
+  background: rgba(201,168,106,.22);
+}
+
+.belowMap {
+  display: grid;
+  gap: 8px;
+}
+
+.card,
+.log {
+  border-radius: 8px;
+}
+
+.deployment p,
+.preview p,
+.card p {
+  margin: 6px 0;
+}
+
+.actionPanel {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 40;
+  padding: 8px;
+  box-shadow: 0 14px 28px rgba(0,0,0,.48);
+}
+
+.actionPanel h2 {
+  display: none;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.quickActions button,
+.aiButtons button {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 6px 4px;
+}
+
+.actionPanel details {
+  margin-top: 6px;
+}
+
+.actionList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 6px;
+  max-height: 170px;
+  overflow: auto;
+  padding-top: 6px;
+}
+
+.aiButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+summary {
+  cursor: pointer;
+  color: #c9a86a;
+  font-weight: 700;
+}
+
+.ai details,
+.log details {
+  display: grid;
+  gap: 6px;
+}
+
+.log {
+  max-height: none;
+  overflow: visible;
+}
+
+.log details[open] {
+  max-height: 220px;
+  overflow: auto;
+}
+
+@media (min-width: 820px) {
+  .battleScreen {
+    max-width: 820px;
+    margin: 0 auto;
+    border-left: 1px solid rgba(201,168,106,.24);
+    border-right: 1px solid rgba(201,168,106,.24);
+  }
+
+  .actionPanel {
+    left: 50%;
+    right: auto;
+    width: min(804px, calc(100% - 16px));
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 520px) {
+  .battleScreen {
+    padding: 6px 6px 108px;
+  }
+
+  .phase {
+    gap: 6px;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .pixiMap {
+    height: 62vh;
+    min-height: 360px;
+  }
+
+  .viewSwitch {
+    left: 8px;
+    right: 8px;
+    justify-content: flex-end;
+  }
+
+  .viewSwitch button {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .quickActions button {
+    font-size: 13px;
+  }
+}

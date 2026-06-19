@@ -70,9 +70,7 @@ function createSummary(totalGames: number): SimulationSummary {
     averageDecreeUses: 0,
     firstActorWinRate: 0,
     mapWinRate: {
-      test_map_a: { qingqiu: 0, tianmen: 0, draw: 0, games: 0 },
-      test_map_b: { qingqiu: 0, tianmen: 0, draw: 0, games: 0 },
-      test_map_c: { qingqiu: 0, tianmen: 0, draw: 0, games: 0 },
+      tutorial_battlefield: { qingqiu: 0, tianmen: 0, draw: 0, games: 0 },
     },
     abnormalSamples: [],
   };
