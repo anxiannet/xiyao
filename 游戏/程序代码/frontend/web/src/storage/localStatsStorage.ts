@@ -18,8 +18,8 @@ export function loadAIDecisionLog(): AIDecisionRecord[] {
   }
 }
 
-export function saveAIStats(summary: unknown): void {
-  localStorage.setItem(AI_STATS_KEY, JSON.stringify({ savedAt: Date.now(), summary }));
+export function saveAIStats(summary: unknown, abnormalSamples: unknown[] = []): void {
+  localStorage.setItem(AI_STATS_KEY, JSON.stringify({ savedAt: Date.now(), summary, abnormalSamples: abnormalSamples.slice(0, 10) }));
 }
 
 export function loadAIStats<T = unknown>(): T | null {

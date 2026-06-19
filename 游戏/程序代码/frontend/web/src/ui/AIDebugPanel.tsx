@@ -1,10 +1,21 @@
+import type { AIBatchProgress } from '../ai/aiSimulator';
 import type { MatchState } from '../engine/rules';
 
-export default function AIDebugPanel({ match, stats }: { match: MatchState; stats: unknown }) {
+export default function AIDebugPanel({ match, stats, aiBatchProgress }: { match: MatchState; stats: unknown; aiBatchProgress: AIBatchProgress }) {
   const latest = match.aiDecisions[0];
   return (
     <section className="card ai">
       <h2>AI决策面板</h2>
+      <div className="aiBatch">
+        <h3>本地1000局测试进度</h3>
+        <div className="progress">
+          <div className="progressBar" style={{ width: `${aiBatchProgress.percent}%` }} />
+        </div>
+        <p>{aiBatchProgress.completed} / {aiBatchProgress.total} ｜ {aiBatchProgress.percent}% ｜ {aiBatchProgress.running ? '运行中' : '已完成'}</p>
+        <p>当前青丘胜：{aiBatchProgress.qingqiuWins} ｜ 当前天门胜：{aiBatchProgress.tianmenWins}</p>
+        <p>当前平局：{aiBatchProgress.draws} ｜ 当前异常局：{aiBatchProgress.abnormalFinished}</p>
+        <p>正常完成：{aiBatchProgress.normalFinished}</p>
+      </div>
       {latest ? (
         <>
           <p>当前AI单位：{latest.unitName}</p>

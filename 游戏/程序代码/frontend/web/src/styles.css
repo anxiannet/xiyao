@@ -24,7 +24,7 @@ button:hover:not(:disabled), select:hover { border-color: var(--dusk-gold); }
 .field { display: grid; gap: 4px; min-width: 160px; }
 .field span { font-size: 12px; opacity: .75; }
 select, button { padding: 9px 11px; }
-.gamegrid { display: grid; grid-template-columns: minmax(680px, 1fr) 360px; gap: 12px; min-height: 560px; }
+.gamegrid { display: grid; grid-template-columns: minmax(520px, 1fr) 360px; gap: 12px; min-height: 560px; }
 .side { display: grid; gap: 12px; align-content: start; max-height: 680px; overflow: auto; }
 .card { padding: 14px; }
 .card h2, .card h3 { margin: 0 0 10px; }
@@ -36,10 +36,10 @@ select, button { padding: 9px 11px; }
 .deployCols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .deployCols div { display: grid; gap: 8px; }
 .picked { outline: 2px solid var(--dusk-gold); }
-.map { position: relative; overflow: hidden; border: 1px solid var(--line); background: radial-gradient(circle at center, rgba(201,168,106,.10), transparent 42%), linear-gradient(180deg, rgba(239,207,146,.12), rgba(27,32,39,.9)); min-height: 600px; }
-.boardViewport { width: 100%; height: 600px; overflow: auto; display: flex; justify-content: center; align-items: center; }
-.board { position: relative; width: 680px; height: 540px; flex: 0 0 auto; }
-.hex { position: absolute; width: 78px; height: 68px; transform: translate(-50%, -50%); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: grid; place-items: center; background: rgba(201,168,106,.12); }
+.map { position: relative; overflow: auto; border: 1px solid var(--line); background: radial-gradient(circle at center, rgba(201,168,106,.10), transparent 42%), linear-gradient(180deg, rgba(239,207,146,.12), rgba(27,32,39,.9)); min-height: 440px; }
+.boardViewport { width: 100%; min-height: 440px; overflow: visible; padding: 26px 18px; }
+.board { position: relative; margin: 0 auto; flex: 0 0 auto; }
+.hex { position: absolute; width: 76px; height: 88px; clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); display: grid; place-items: center; border: 2px solid rgba(201,168,106,.32); background: rgba(201,168,106,.12); }
 .hex.selected { outline: 3px solid var(--dusk-gold); z-index: 5; }
 .hex.moveable .highlightLayer { box-shadow: inset 0 0 0 5px rgba(79,163,165,.5); }
 .hex.attackable .highlightLayer { box-shadow: inset 0 0 0 5px rgba(184,90,60,.72); }
@@ -49,14 +49,14 @@ select, button { padding: 9px 11px; }
 .hex.cover_shadow { background: rgba(58,70,72,.88); }
 .hex.dusk_rift { background: rgba(79,163,165,.24); box-shadow: inset 0 0 18px rgba(79,163,165,.62); }
 .hex.obstacle { background: rgba(17,20,24,.92); color: #918b7d; }
-.hex.deploy-qingqiu { border-color: rgba(79,163,165,.8); }
-.hex.deploy-tianmen { border-color: rgba(216,210,191,.8); }
-.terrainLayer { font-size: 20px; color: var(--dusk-gold); z-index: 1; }
-.coord { position: absolute; top: 7px; font-size: 10px; opacity: .65; z-index: 2; }
+.hex.deploy-qingqiu { border-color: rgba(79,163,165,.98); box-shadow: inset 0 0 0 2px rgba(79,163,165,.35); }
+.hex.deploy-tianmen { border-color: rgba(184,90,60,.98); box-shadow: inset 0 0 0 2px rgba(184,90,60,.35); }
+.terrainLayer { position: absolute; top: 34px; left: 0; right: 0; text-align: center; font-size: 20px; color: var(--dusk-gold); z-index: 1; }
+.coord { position: absolute; top: 14px; left: 0; right: 0; text-align: center; font-size: 10px; opacity: .72; z-index: 2; }
 .owner { position: absolute; bottom: 7px; font-size: 10px; z-index: 2; }
 .statusLayer { position: absolute; right: 7px; top: 7px; display: grid; gap: 2px; z-index: 3; }
 .statusLayer b, .unitLayer em { width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--line); font-size: 10px; display: grid; place-items: center; background: rgba(42,49,59,.92); font-style: normal; }
-.unitLayer { position: absolute; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 2px solid; font-size: 11px; font-family: sans-serif; z-index: 4; }
+.unitLayer { position: absolute; top: 48px; left: 18px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 2px solid; font-size: 11px; font-family: sans-serif; z-index: 4; }
 .unitLayer i { font-size: 16px; font-style: normal; font-weight: 700; }
 .unitLayer em { position: absolute; right: -6px; bottom: -6px; }
 .unitLayer.qingqiu { background: rgba(79,163,165,.9); border-color: #b7ffff; color: #071315; }
@@ -64,23 +64,38 @@ select, button { padding: 9px 11px; }
 .highlightLayer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 .candidate { display: grid; gap: 4px; margin: 6px 0; }
 .candidate small { color: #d8d2bf; line-height: 1.55; }
+.aiBatch { display: grid; gap: 6px; margin-bottom: 12px; }
+.aiBatch p { margin: 0; }
+.progress {
+  height: 14px;
+  border: 1px solid #C9A86A;
+  background: #1F2228;
+}
+.progressBar {
+  height: 100%;
+  background: #4FA3A5;
+  transition: width 0.12s linear;
+}
 .log { padding: 12px 16px; max-height: 190px; overflow: auto; }
 .log p { margin: 6px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #d8d2bf; }
 .log p b { color: var(--dusk-gold); }
 @media (max-width: 980px) {
   .gamegrid { grid-template-columns: 1fr; }
   .side { max-height: none; }
-  .map { min-height: 520px; }
-  .boardViewport { height: 520px; }
-  .board { transform: scale(.74); transform-origin: center center; }
+  .map { min-height: 420px; overflow-x: auto; }
+  .boardViewport { min-height: 420px; }
+}
+@media (max-width: 768px) {
+  .gamegrid { grid-template-columns: 1fr; }
+  .map { overflow-x: auto; }
+  .board { margin: 0 auto; }
 }
 @media (max-width: 520px) {
   .shell { padding: 8px; }
   .homebar { gap: 8px; }
   .field { min-width: 140px; }
-  .map { min-height: 500px; }
-  .boardViewport { height: 500px; overflow: hidden; }
-  .board { transform: scale(.58); transform-origin: center center; }
+  .map { min-height: 390px; }
+  .boardViewport { min-height: 390px; padding: 18px 10px; }
   .coord { font-size: 12px; }
   .terrainLayer { font-size: 24px; }
   .owner { font-size: 12px; }
