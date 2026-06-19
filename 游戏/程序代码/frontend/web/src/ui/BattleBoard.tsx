@@ -1,6 +1,19 @@
 import React from 'react';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { terrainName, type DecreeId, type GameAction, type MatchState, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
+import terrainCentralObjectiveNeutralUrl from '../assets/split-terrain/terrain_central_objective_neutral.png';
+import terrainCentralObjectiveQingqiuUrl from '../assets/split-terrain/terrain_central_objective_qingqiu.png';
+import terrainCentralObjectiveTianmenUrl from '../assets/split-terrain/terrain_central_objective_tianmen.png';
+import terrainCoverShadowUrl from '../assets/split-terrain/terrain_cover_shadow.png';
+import terrainDuskRiftUrl from '../assets/dusk-rift-tile-200.png';
+import terrainEdgeObjectiveNeutralUrl from '../assets/split-terrain/terrain_edge_objective_neutral.png';
+import terrainEdgeObjectiveQingqiuUrl from '../assets/split-terrain/terrain_edge_objective_qingqiu.png';
+import terrainEdgeObjectiveTianmenUrl from '../assets/split-terrain/terrain_edge_objective_tianmen.png';
+import terrainHighGroundUrl from '../assets/split-terrain/terrain_high_ground.png';
+import terrainObstacleUrl from '../assets/split-terrain/terrain_obstacle_ruined_wall.png';
+import terrainPlainUrl from '../assets/split-terrain/terrain_plain_stone.png';
+import statusFoxfireRemnantUrl from '../assets/split-terrain/status_foxfire_remnant.png';
+import statusInspectionZoneUrl from '../assets/split-terrain/status_inspection_zone.png';
 
 type ViewMode = 'battle' | 'tactical';
 
@@ -19,6 +32,24 @@ const tileColors: Record<TerrainId, { fill: number; line: number; label: string 
   obstacle: { fill: 0x1f2329, line: 0x5e5448, label: '■' },
 };
 
+const assetUrls = {
+  terrainCentralObjectiveNeutral: terrainCentralObjectiveNeutralUrl,
+  terrainCentralObjectiveQingqiu: terrainCentralObjectiveQingqiuUrl,
+  terrainCentralObjectiveTianmen: terrainCentralObjectiveTianmenUrl,
+  terrainCoverShadow: terrainCoverShadowUrl,
+  terrainDuskRift: terrainDuskRiftUrl,
+  terrainEdgeObjectiveNeutral: terrainEdgeObjectiveNeutralUrl,
+  terrainEdgeObjectiveQingqiu: terrainEdgeObjectiveQingqiuUrl,
+  terrainEdgeObjectiveTianmen: terrainEdgeObjectiveTianmenUrl,
+  terrainHighGround: terrainHighGroundUrl,
+  terrainObstacle: terrainObstacleUrl,
+  terrainPlain: terrainPlainUrl,
+  statusFoxfireRemnant: statusFoxfireRemnantUrl,
+  statusInspectionZone: statusInspectionZoneUrl,
+};
+
+type AssetKey = keyof typeof assetUrls;
+
 const squadColors: Record<SquadId, { fill: number; line: number; mark: string }> = {
   qingqiu: { fill: 0x4fa3a5, line: 0xc9fff6, mark: '青' },
   tianmen: { fill: 0xd8d2bf, line: 0xfff2bd, mark: '天' },
@@ -26,6 +57,7 @@ const squadColors: Record<SquadId, { fill: number; line: number; mark: string }>
 
 const HEX_DRAW_W = 84;
 const HEX_DRAW_H = 72;
+const TILE_SPRITE_SIZE = 104;
 
 const decreeText: Record<DecreeId, string> = {
   forbid_movement: '禁行令',
@@ -84,6 +116,32 @@ function getUnitAt(units: UnitState[], tileId: string) {
   return units.find((unit) => unit.tileId === tileId && !unit.defeated);
 }
 
+function getTerrainAssetKey(tile: TileState): AssetKey {
+  if (tile.terrainLayer === 'plain') return 'terrainPlain';
+  if (tile.terrainLayer === 'high_ground') return 'terrainHighGround';
+  if (tile.terrainLayer === 'cover_shadow') return 'terrainCoverShadow';
+  if (tile.terrainLayer === 'dusk_rift') return 'terrainDuskRift';
+  if (tile.terrainLayer === 'obstacle') return 'terrainObstacle';
+  if (tile.terrainLayer === 'central_objective') {
+    if (tile.objectiveOwner === 'qingqiu') return 'terrainCentralObjectiveQingqiu';
+    if (tile.objectiveOwner === 'tianmen') return 'terrainCentralObjectiveTianmen';
+    return 'terrainCentralObjectiveNeutral';
+  }
+  if (tile.objectiveOwner === 'qingqiu') return 'terrainEdgeObjectiveQingqiu';
+  if (tile.objectiveOwner === 'tianmen') return 'terrainEdgeObjectiveTianmen';
+  return 'terrainEdgeObjectiveNeutral';
+}
+
+function addCenteredTileSprite(layer: Container, texture: Texture, x: number, y: number, size = TILE_SPRITE_SIZE, alpha = 1) {
+  const sprite = new Sprite(texture);
+  sprite.anchor.set(0.5);
+  sprite.width = size;
+  sprite.height = size;
+  sprite.alpha = alpha;
+  sprite.position.set(x, y);
+  layer.addChild(sprite);
+}
+
 export default function BattleBoard({
   match,
   legalActions,
@@ -104,6 +162,7 @@ export default function BattleBoard({
   const hostRef = React.useRef<HTMLDivElement | null>(null);
   const appRef = React.useRef<Application | null>(null);
   const layersRef = React.useRef<Record<'terrain' | 'status' | 'unit' | 'effect', Container> | null>(null);
+  const assetTexturesRef = React.useRef<Partial<Record<AssetKey, Texture>>>({});
   const [viewMode, setViewMode] = React.useState<ViewMode>('battle');
   const [ready, setReady] = React.useState(false);
 
@@ -117,13 +176,17 @@ export default function BattleBoard({
     if (!host) return undefined;
     const app = new Application();
 
-    app.init({ antialias: true, backgroundAlpha: 0, resizeTo: host }).then(() => {
+    Promise.all([
+      app.init({ antialias: true, backgroundAlpha: 0, resizeTo: host }),
+      Promise.all(Object.entries(assetUrls).map(async ([key, url]) => [key, await Assets.load<Texture>(url)] as const)),
+    ]).then(([, loadedAssets]) => {
       initialized = true;
       if (disposed) {
         app.canvas.remove();
         app.destroy();
         return;
       }
+      assetTexturesRef.current = Object.fromEntries(loadedAssets) as Partial<Record<AssetKey, Texture>>;
       host.appendChild(app.canvas);
       const terrain = new Container();
       const status = new Container();
@@ -140,6 +203,7 @@ export default function BattleBoard({
       setReady(false);
       layersRef.current = null;
       appRef.current = null;
+      assetTexturesRef.current = {};
       if (initialized) {
         app.canvas.remove();
         app.destroy();
@@ -186,6 +250,15 @@ export default function BattleBoard({
       });
       layers.terrain.addChild(tileGraphic);
 
+      const terrainTexture = assetTexturesRef.current[getTerrainAssetKey(tile)];
+      if (terrainTexture) {
+        addCenteredTileSprite(layers.terrain, terrainTexture, x, y);
+        const rim = new Graphics();
+        drawHex(rim, 0x000000, colors.line, 0);
+        rim.position.set(x, y);
+        layers.terrain.addChild(rim);
+      }
+
       const label = makeText(tile.deploymentOwner ? squadColors[tile.deploymentOwner].mark : colors.label, tile.terrainLayer === 'central_objective' ? 24 : 18);
       label.position.set(x, y - 2);
       layers.terrain.addChild(label);
@@ -209,14 +282,12 @@ export default function BattleBoard({
       }
 
       if (tile.statusLayer.includes('foxfire_remnant')) {
-        const remnant = makeText('狐', 13, 0x96fff1);
-        remnant.position.set(x - 22, y - 4);
-        layers.status.addChild(remnant);
+        const statusTexture = assetTexturesRef.current.statusFoxfireRemnant;
+        if (statusTexture) addCenteredTileSprite(layers.status, statusTexture, x, y, TILE_SPRITE_SIZE * 0.82, 0.82);
       }
       if (tile.statusLayer.includes('inspection_zone')) {
-        const inspect = makeText('验', 13, 0xffdf7f);
-        inspect.position.set(x + 22, y - 4);
-        layers.status.addChild(inspect);
+        const statusTexture = assetTexturesRef.current.statusInspectionZone;
+        if (statusTexture) addCenteredTileSprite(layers.status, statusTexture, x, y, TILE_SPRITE_SIZE * 0.82, 0.82);
       }
     }
 
