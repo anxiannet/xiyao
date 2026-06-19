@@ -14,6 +14,12 @@ import terrainObstacleUrl from '../assets/split-terrain/terrain_obstacle_ruined_
 import terrainPlainUrl from '../assets/split-terrain/terrain_plain_stone.png';
 import statusFoxfireRemnantUrl from '../assets/split-terrain/status_foxfire_remnant.png';
 import statusInspectionZoneUrl from '../assets/split-terrain/status_inspection_zone.png';
+import sulingLeftBackUrl from '../assets/units/suling/suling_left_back.png';
+import sulingLeftFrontUrl from '../assets/units/suling/suling_left_front.png';
+import sulingLeftSideUrl from '../assets/units/suling/suling_left_side.png';
+import sulingRightBackUrl from '../assets/units/suling/suling_right_back.png';
+import sulingRightFrontUrl from '../assets/units/suling/suling_right_front.png';
+import sulingRightSideUrl from '../assets/units/suling/suling_right_side.png';
 
 type ViewMode = 'battle' | 'tactical';
 
@@ -46,6 +52,12 @@ const assetUrls = {
   terrainPlain: terrainPlainUrl,
   statusFoxfireRemnant: statusFoxfireRemnantUrl,
   statusInspectionZone: statusInspectionZoneUrl,
+  unitSulingLeftBack: sulingLeftBackUrl,
+  unitSulingLeftFront: sulingLeftFrontUrl,
+  unitSulingLeftSide: sulingLeftSideUrl,
+  unitSulingRightBack: sulingRightBackUrl,
+  unitSulingRightFront: sulingRightFrontUrl,
+  unitSulingRightSide: sulingRightSideUrl,
 };
 
 type AssetKey = keyof typeof assetUrls;
@@ -58,6 +70,7 @@ const squadColors: Record<SquadId, { fill: number; line: number; mark: string }>
 const HEX_DRAW_W = 84;
 const HEX_DRAW_H = 72;
 const TILE_SPRITE_SIZE = 104;
+const UNIT_SPRITE_SIZE = 92;
 
 const decreeText: Record<DecreeId, string> = {
   forbid_movement: '禁行令',
@@ -140,6 +153,11 @@ function addCenteredTileSprite(layer: Container, texture: Texture, x: number, y:
   sprite.alpha = alpha;
   sprite.position.set(x, y);
   layer.addChild(sprite);
+}
+
+function getUnitAssetKey(unit: UnitState): AssetKey | null {
+  if (unit.id !== 'suling') return null;
+  return 'unitSulingRightBack';
 }
 
 export default function BattleBoard({
@@ -302,16 +320,32 @@ export default function BattleBoard({
       group.on('pointertap', () => {
         if (!locked) onSelectUnit(unit.id);
       });
-      const disc = new Graphics();
-      const squad = squadColors[unit.squad];
-      disc.circle(0, 0, unit.summon ? 12 : 16);
-      disc.fill({ color: squad.fill, alpha: unit.summon ? 0.72 : 0.96 });
-      disc.stroke({ color: attackTargets.has(unit.id) ? 0xb85a3c : squad.line, width: match.selectedUnitId === unit.id ? 4 : 2 });
-      group.addChild(disc);
-      const initial = makeText(unit.name.slice(0, 1), 17, unit.squad === 'tianmen' ? 0x232323 : 0x062226);
-      group.addChild(initial);
+      const unitAssetKey = getUnitAssetKey(unit);
+      const unitTexture = unitAssetKey ? assetTexturesRef.current[unitAssetKey] : null;
+      if (unitTexture) {
+        const halo = new Graphics();
+        halo.ellipse(0, 16, 21, 9);
+        halo.fill({ color: unit.squad === 'qingqiu' ? 0x4fa3a5 : 0xd8d2bf, alpha: match.selectedUnitId === unit.id ? 0.42 : 0.22 });
+        halo.stroke({ color: attackTargets.has(unit.id) ? 0xb85a3c : squadColors[unit.squad].line, width: match.selectedUnitId === unit.id ? 3 : 1, alpha: 0.9 });
+        group.addChild(halo);
+        const sprite = new Sprite(unitTexture);
+        sprite.anchor.set(0.5, 0.82);
+        sprite.width = UNIT_SPRITE_SIZE;
+        sprite.height = UNIT_SPRITE_SIZE;
+        sprite.position.set(0, 18);
+        group.addChild(sprite);
+      } else {
+        const disc = new Graphics();
+        const squad = squadColors[unit.squad];
+        disc.circle(0, 0, unit.summon ? 12 : 16);
+        disc.fill({ color: squad.fill, alpha: unit.summon ? 0.72 : 0.96 });
+        disc.stroke({ color: attackTargets.has(unit.id) ? 0xb85a3c : squad.line, width: match.selectedUnitId === unit.id ? 4 : 2 });
+        group.addChild(disc);
+        const initial = makeText(unit.name.slice(0, 1), 17, unit.squad === 'tianmen' ? 0x232323 : 0x062226);
+        group.addChild(initial);
+      }
       const hp = makeText(`${unit.hp}`, 9, 0xffffff);
-      hp.position.set(14, 14);
+      hp.position.set(unitTexture ? 20 : 14, unitTexture ? 20 : 14);
       group.addChild(hp);
       layers.unit.addChild(group);
     }
