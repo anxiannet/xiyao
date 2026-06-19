@@ -1,9 +1,13 @@
 import React from 'react';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { terrainName, type DecreeId, type GameAction, type MatchState, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
-import { ISO_H, ISO_W, isoProject } from './isoProjection';
 
 type ViewMode = 'battle' | 'tactical';
+
+const GRID_W = 104;
+const GRID_H = 86;
+const GRID_X_STEP = 84;
+const GRID_Y_STEP = 62;
 
 const tileColors: Record<TerrainId, { fill: number; line: number; label: string }> = {
   plain: { fill: 0x6b6f68, line: 0xc9a86a, label: '□' },
@@ -20,8 +24,8 @@ const squadColors: Record<SquadId, { fill: number; line: number; mark: string }>
   tianmen: { fill: 0xd8d2bf, line: 0xfff2bd, mark: '天' },
 };
 
-const HEX_DRAW_W = ISO_W * 0.64;
-const HEX_DRAW_H = ISO_H * 0.78;
+const HEX_DRAW_W = 84;
+const HEX_DRAW_H = 72;
 
 const decreeText: Record<DecreeId, string> = {
   forbid_movement: '禁行令',
@@ -30,23 +34,32 @@ const decreeText: Record<DecreeId, string> = {
 };
 
 function boundsForTiles(tiles: TileState[]) {
-  const points = tiles.map((tile) => isoProject(tile.q, tile.r));
+  const points = tiles.map((tile) => gridProject(tile.q, tile.r));
   return {
-    minX: Math.min(...points.map((point) => point.x)) - ISO_W,
-    maxX: Math.max(...points.map((point) => point.x)) + ISO_W,
-    minY: Math.min(...points.map((point) => point.y)) - ISO_H,
-    maxY: Math.max(...points.map((point) => point.y)) + ISO_H * 2,
+    minX: Math.min(...points.map((point) => point.x)) - GRID_W,
+    maxX: Math.max(...points.map((point) => point.x)) + GRID_W,
+    minY: Math.min(...points.map((point) => point.y)) - GRID_H,
+    maxY: Math.max(...points.map((point) => point.y)) + GRID_H,
+  };
+}
+
+function gridProject(q: number, r: number) {
+  const centeredQ = q - 2;
+  const rowOffset = r % 2 === 0 ? 0 : GRID_X_STEP / 2;
+  return {
+    x: centeredQ * GRID_X_STEP + rowOffset - GRID_X_STEP / 4,
+    y: r * GRID_Y_STEP,
   };
 }
 
 function drawHex(graphics: Graphics, fill: number, line: number, alpha = 1) {
   graphics.clear();
-  graphics.moveTo(0, -HEX_DRAW_H / 2);
+  graphics.moveTo(-HEX_DRAW_W / 2, -HEX_DRAW_H / 4);
+  graphics.lineTo(0, -HEX_DRAW_H / 2);
   graphics.lineTo(HEX_DRAW_W / 2, -HEX_DRAW_H / 4);
   graphics.lineTo(HEX_DRAW_W / 2, HEX_DRAW_H / 4);
   graphics.lineTo(0, HEX_DRAW_H / 2);
   graphics.lineTo(-HEX_DRAW_W / 2, HEX_DRAW_H / 4);
-  graphics.lineTo(-HEX_DRAW_W / 2, -HEX_DRAW_H / 4);
   graphics.closePath();
   graphics.fill({ color: fill, alpha });
   graphics.stroke({ color: line, width: 2, alpha: 0.92 });
@@ -146,8 +159,8 @@ export default function BattleBoard({
     const width = bounds.maxX - bounds.minX;
     const height = bounds.maxY - bounds.minY;
     const scale = viewMode === 'battle'
-      ? Math.min(app.renderer.width / width, app.renderer.height / height) * 0.92
-      : Math.min(app.renderer.width / (width * 0.88), app.renderer.height / (height * 0.88)) * 0.98;
+      ? Math.min(app.renderer.width / width, app.renderer.height / height) * 0.98
+      : Math.min(app.renderer.width / (width * 0.84), app.renderer.height / (height * 0.84)) * 0.96;
     const offsetX = app.renderer.width / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
     const offsetY = app.renderer.height / 2 - ((bounds.minY + bounds.maxY) / 2) * scale + (viewMode === 'battle' ? 12 : 0);
     for (const layer of [layers.terrain, layers.status, layers.unit]) {
@@ -156,7 +169,7 @@ export default function BattleBoard({
     }
 
     for (const tile of match.tiles) {
-      const { x, y } = isoProject(tile.q, tile.r);
+      const { x, y } = gridProject(tile.q, tile.r);
       const tileGraphic = new Graphics();
       const colors = tileColors[tile.terrainLayer];
       drawHex(tileGraphic, colors.fill, colors.line);
@@ -210,7 +223,7 @@ export default function BattleBoard({
     for (const unit of match.units.filter((item) => item.tileId && !item.defeated)) {
       const tile = match.tiles.find((item) => item.id === unit.tileId);
       if (!tile) continue;
-      const point = isoProject(tile.q, tile.r);
+      const point = gridProject(tile.q, tile.r);
       const group = new Container();
       group.position.set(point.x, point.y - 20);
       group.eventMode = locked ? 'none' : 'static';
