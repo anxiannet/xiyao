@@ -1,7 +1,7 @@
 import { terrainIcon, tileStatusName, squads, type GameAction, type MatchState } from '../engine/rules';
 
-const HEX_W = 76;
-const HEX_H = 88;
+const HEX_W = 96;
+const HEX_H = 110;
 
 function getTilePixel(tile: { q: number; r: number }) {
   return {
@@ -43,29 +43,35 @@ export default function BattleBoard({
   return (
     <section className="map">
       <div className="boardViewport">
-        <div className="board" style={{ width: boardBounds.width, height: boardBounds.height }}>
-          {match.tiles.map((tile) => {
-            const unit = match.units.find((item) => item.tileId === tile.id && !item.defeated);
-            const canDeploy = match.phase === 'deployment' && selectedDeployUnitId && tile.deploymentOwner === match.playerSquad && !unit && tile.terrainLayer !== 'obstacle';
-            const selected = unit?.id === match.selectedUnitId;
-            const attackable = unit ? attackTargets.has(unit.id) : false;
-            const pixel = getTilePixel(tile);
-            return (
-              <button
-                key={tile.id}
-                className={`hex ${tile.terrainLayer} ${tile.deploymentOwner ? `deploy-${tile.deploymentOwner}` : ''} ${selected ? 'selected' : ''} ${moveTargets.has(tile.id) || canDeploy ? 'moveable' : ''} ${attackable ? 'attackable' : ''}`}
-                style={{ left: pixel.x - boardBounds.minX, top: pixel.y - boardBounds.minY }}
-                onClick={() => (canDeploy ? onDeployTile(tile.id) : onSelectUnit(unit?.id ?? null))}
-              >
-                <span className="terrainLayer">{terrainIcon[tile.terrainLayer]}</span>
-                <span className="coord">{tile.id}</span>
-                {tile.objectiveOwner && <span className="owner">{tile.objectiveOwner === 'neutral' ? '中立' : squads[tile.objectiveOwner].mark}</span>}
-                <span className="statusLayer">{tile.statusLayer.map((status) => <b key={status}>{tileStatusName[status].slice(0, 1)}</b>)}</span>
-                {unit && <span className={`unitLayer ${unit.squad}`}><i>{unit.name.slice(0, 1)}</i><em>{unit.ap}</em></span>}
-                <span className="highlightLayer" />
-              </button>
-            );
-          })}
+        <div className="boardScene">
+          <div className="board" style={{ width: boardBounds.width, height: boardBounds.height }}>
+            {match.tiles.map((tile) => {
+              const unit = match.units.find((item) => item.tileId === tile.id && !item.defeated);
+              const canDeploy = match.phase === 'deployment' && selectedDeployUnitId && tile.deploymentOwner === match.playerSquad && !unit && tile.terrainLayer !== 'obstacle';
+              const selected = unit?.id === match.selectedUnitId;
+              const attackable = unit ? attackTargets.has(unit.id) : false;
+              const pixel = getTilePixel(tile);
+              return (
+                <button
+                  key={tile.id}
+                  className={`hex ${tile.terrainLayer} ${tile.deploymentOwner ? `deploy-${tile.deploymentOwner}` : ''} ${selected ? 'selected' : ''} ${moveTargets.has(tile.id) || canDeploy ? 'moveable' : ''} ${attackable ? 'attackable' : ''}`}
+                  style={{
+                    left: pixel.x - boardBounds.minX,
+                    top: pixel.y - boardBounds.minY,
+                    zIndex: selected ? 500 : Math.round(pixel.y - boardBounds.minY),
+                  }}
+                  onClick={() => (canDeploy ? onDeployTile(tile.id) : onSelectUnit(unit?.id ?? null))}
+                >
+                  <span className="terrainLayer">{terrainIcon[tile.terrainLayer]}</span>
+                  <span className="coord">{tile.id}</span>
+                  {tile.objectiveOwner && <span className="owner">{tile.objectiveOwner === 'neutral' ? '中立' : squads[tile.objectiveOwner].mark}</span>}
+                  <span className="statusLayer">{tile.statusLayer.map((status) => <b key={status}>{tileStatusName[status].slice(0, 1)}</b>)}</span>
+                  {unit && <span className={`unitLayer ${unit.squad}`}><i>{unit.name.slice(0, 1)}</i><em>{unit.ap}</em></span>}
+                  <span className="highlightLayer" />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
