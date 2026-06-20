@@ -277,7 +277,7 @@ select, button, input { padding: 9px 11px; }
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
@@ -309,7 +309,7 @@ select, button, input { padding: 9px 11px; }
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: contain;
 }
 
 .editorStage svg {
@@ -322,14 +322,24 @@ select, button, input { padding: 9px 11px; }
 }
 
 .editorHex polygon {
-  fill: rgba(0, 0, 0, .08);
-  stroke: rgba(244, 214, 151, .92);
+  fill: transparent;
+  stroke: rgba(255, 255, 255, .92);
   stroke-width: 2;
 }
 
 .editorHex:hover polygon {
-  fill: rgba(201, 168, 106, .2);
-  stroke: #ffe08a;
+  fill: rgba(255, 255, 255, .12);
+  stroke: #ffffff;
+}
+
+.editorHex.backgroundTile polygon {
+  fill: rgba(190, 190, 190, .18);
+  stroke: rgba(205, 205, 205, .92);
+}
+
+.editorHex.backgroundTile:hover polygon {
+  fill: rgba(210, 210, 210, .28);
+  stroke: #dedede;
 }
 
 .editorHex text {

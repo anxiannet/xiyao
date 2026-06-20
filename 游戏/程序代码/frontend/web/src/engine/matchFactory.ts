@@ -7,18 +7,20 @@ import { validateMap } from './mapValidator';
 export function createMatch(mode: Mode, mapId: MapId, playerSquad: SquadId = 'qingqiu'): MatchState {
   const config = getMapConfig(mapId);
   const validation = validateMap(config);
-  const tiles: TileState[] = config.tiles.map((tile) => ({
-    id: tile.id,
-    q: tile.q,
-    r: tile.r,
-    row: tile.row,
-    col: tile.col,
-    terrainLayer: tile.terrain,
-    deploymentOwner: tile.deploymentOwner,
-    objectiveType: tile.objectiveType,
-    objectiveOwner: tile.objectiveType ? tile.objectiveOwner ?? 'neutral' : undefined,
-    statusLayer: [],
-  }));
+  const tiles: TileState[] = config.tiles
+    .filter((tile) => !tile.isBackground)
+    .map((tile) => ({
+      id: tile.id,
+      q: tile.q,
+      r: tile.r,
+      row: tile.row,
+      col: tile.col,
+      terrainLayer: tile.terrain,
+      deploymentOwner: tile.deploymentOwner,
+      objectiveType: tile.objectiveType,
+      objectiveOwner: tile.objectiveType ? tile.objectiveOwner ?? 'neutral' : undefined,
+      statusLayer: [],
+    }));
   const units: UnitState[] = unitConfigs.map((unit) => ({
     ...unit,
     maxHp: unit.hp,

@@ -2,11 +2,12 @@ import React from 'react';
 import { MAP_CONFIGS_STORAGE_KEY, MAP_EDITOR_DRAFT_KEY } from '../data/mapStorage';
 import { mapConfigs, type MapConfig, type MapGridConfig, type MapTileConfig, type ObjectiveType, type SquadId, type TerrainId } from '../data/maps';
 
-type PaintMode = 'terrain' | 'deployment' | 'objective';
+type PaintMode = 'terrain' | 'deployment' | 'objective' | 'background';
 
 const terrainOptions: TerrainId[] = ['plain', 'central_objective', 'edge_objective', 'high_ground', 'cover_shadow', 'dusk_rift', 'obstacle'];
 const deploymentOptions: Array<SquadId | 'none'> = ['none', 'qingqiu', 'tianmen'];
 const objectiveOptions: Array<ObjectiveType | 'none'> = ['none', 'central', 'edge'];
+const backgroundOptions = ['background', 'playable'] as const;
 
 const terrainLabels: Record<TerrainId, string> = {
   plain: '普通',
@@ -28,6 +29,9 @@ const terrainMarks: Record<TerrainId, string> = {
   obstacle: '阻',
 };
 
+const REGULAR_HEX_HEIGHT_RATIO = Math.sqrt(3) / 2;
+const GRID_ROTATION_DEG = 30;
+
 function createTile(row: number, col: number): MapTileConfig {
   return {
     id: `${col},${row}`,
@@ -39,6 +43,7 @@ function createTile(row: number, col: number): MapTileConfig {
     deploymentOwner: null,
     objectiveType: null,
     objectiveOwner: null,
+    isBackground: false,
   };
 }
 
@@ -48,41 +53,66 @@ function normalizeTiles(grid: MapGridConfig, existing: MapTileConfig[]) {
   for (let row = 0; row < grid.rows; row += 1) {
     for (let col = 0; col < grid.cols; col += 1) {
       const id = `${col},${row}`;
-      tiles.push(byId.get(id) ?? createTile(row, col));
+      const existing = byId.get(id);
+      tiles.push(existing ? { ...createTile(row, col), ...existing, isBackground: existing.isBackground ?? false } : createTile(row, col));
     }
   }
   return tiles;
 }
 
+function getRegularHexHeight(hexWidth: number) {
+  return hexWidth * REGULAR_HEX_HEIGHT_RATIO;
+}
+
+function getRotatedHexBounds(hexWidth: number) {
+  return {
+    width: getRegularHexHeight(hexWidth),
+    height: hexWidth,
+  };
+}
+
 function getTileCenter(tile: MapTileConfig, grid: MapGridConfig) {
   const scale = grid.scale ?? 1;
-  const stepX = grid.hexWidth * 0.75 + grid.gapX;
-  const stepY = grid.hexHeight * 0.75 + grid.gapY;
+  const bounds = getRotatedHexBounds(grid.hexWidth);
+  const stepX = bounds.width + grid.gapX;
+  const stepY = bounds.height * 0.75 + grid.gapY;
   const rowOffset = tile.row % 2 === 0 ? 0 : stepX / 2;
   return {
-    x: (grid.offsetX + rowOffset + tile.col * stepX + grid.hexWidth / 2) * scale,
-    y: (grid.offsetY + tile.row * stepY + grid.hexHeight / 2) * scale,
+    x: (grid.offsetX + rowOffset + tile.col * stepX + bounds.width / 2) * scale,
+    y: (grid.offsetY + tile.row * stepY + bounds.height / 2) * scale,
   };
 }
 
 function getCanvasSize(grid: MapGridConfig) {
   const scale = grid.scale ?? 1;
-  const stepX = grid.hexWidth * 0.75 + grid.gapX;
-  const stepY = grid.hexHeight * 0.75 + grid.gapY;
+  const bounds = getRotatedHexBounds(grid.hexWidth);
+  const stepX = bounds.width + grid.gapX;
+  const stepY = bounds.height * 0.75 + grid.gapY;
   return {
-    width: Math.max(320, (grid.offsetX * 2 + grid.cols * stepX + grid.hexWidth) * scale),
-    height: Math.max(320, (grid.offsetY * 2 + grid.rows * stepY + grid.hexHeight) * scale),
+    width: Math.max(320, (grid.offsetX * 2 + grid.cols * stepX + bounds.width) * scale),
+    height: Math.max(320, (grid.offsetY * 2 + grid.rows * stepY + bounds.height) * scale),
+  };
+}
+
+function getGridCoverage(grid: MapGridConfig) {
+  const scale = grid.scale ?? 1;
+  const bounds = getRotatedHexBounds(grid.hexWidth);
+  const stepX = bounds.width + grid.gapX;
+  const stepY = bounds.height * 0.75 + grid.gapY;
+  return {
+    width: (grid.offsetX + (grid.cols - 1) * stepX + stepX / 2 + bounds.width) * scale,
+    height: (grid.offsetY + (grid.rows - 1) * stepY + bounds.height) * scale,
   };
 }
 
 function hexPoints(width: number, height: number) {
   const points = [
-    [-width / 2, -height / 4],
-    [0, -height / 2],
-    [width / 2, -height / 4],
-    [width / 2, height / 4],
-    [0, height / 2],
-    [-width / 2, height / 4],
+    [-width / 4, -height / 2],
+    [width / 4, -height / 2],
+    [width / 2, 0],
+    [width / 4, height / 2],
+    [-width / 4, height / 2],
+    [-width / 2, 0],
   ];
   return points.map((point) => point.join(',')).join(' ');
 }
@@ -91,7 +121,10 @@ function loadDraft(): MapConfig {
   if (typeof window !== 'undefined') {
     try {
       const raw = window.localStorage.getItem(MAP_EDITOR_DRAFT_KEY);
-      if (raw) return JSON.parse(raw) as MapConfig;
+      if (raw) {
+        const draft = JSON.parse(raw) as MapConfig;
+        return { ...draft, tiles: normalizeTiles(draft.grid, draft.tiles) };
+      }
     } catch {
       // Ignore corrupted drafts and fall back to the checked-in map.
     }
@@ -106,21 +139,58 @@ function formatMapConfigs(config: MapConfig) {
 
 export default function MapEditor() {
   const [config, setConfig] = React.useState<MapConfig>(() => loadDraft());
+  const [imageSize, setImageSize] = React.useState<{ width: number; height: number } | null>(null);
   const [paintMode, setPaintMode] = React.useState<PaintMode>('terrain');
   const [terrain, setTerrain] = React.useState<TerrainId>('plain');
   const [deploymentOwner, setDeploymentOwner] = React.useState<SquadId | 'none'>('none');
   const [objectiveType, setObjectiveType] = React.useState<ObjectiveType | 'none'>('none');
+  const [backgroundMark, setBackgroundMark] = React.useState<(typeof backgroundOptions)[number]>('background');
+  const [showGrid, setShowGrid] = React.useState(true);
+  const [showLabels, setShowLabels] = React.useState(false);
   const [gridOpacity, setGridOpacity] = React.useState(0.82);
-  const canvasSize = React.useMemo(() => getCanvasSize(config.grid), [config.grid]);
+  const fallbackCanvasSize = React.useMemo(() => getCanvasSize(config.grid), [config.grid]);
+  const canvasSize = imageSize ?? fallbackCanvasSize;
   const exportText = React.useMemo(() => formatMapConfigs(config), [config]);
+  const autoFitImageRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     window.localStorage.setItem(MAP_EDITOR_DRAFT_KEY, JSON.stringify(config));
   }, [config]);
 
+  React.useEffect(() => {
+    if (!imageSize || autoFitImageRef.current === config.backgroundImage) return;
+    const coverage = getGridCoverage(config.grid);
+    if (coverage.width >= imageSize.width && coverage.height >= imageSize.height) {
+      autoFitImageRef.current = config.backgroundImage;
+      return;
+    }
+    autoFitImageRef.current = config.backgroundImage;
+    fitGridToImage(imageSize);
+  }, [config.backgroundImage, config.grid, imageSize]);
+
   function updateGrid(key: keyof MapGridConfig, value: number | string) {
     setConfig((current) => {
       const nextGrid = { ...current.grid, [key]: value } as MapGridConfig;
+      if (key === 'hexWidth') nextGrid.hexHeight = Math.round(getRegularHexHeight(Number(value)));
+      if (key === 'hexHeight') nextGrid.hexWidth = Math.round(Number(value) / REGULAR_HEX_HEIGHT_RATIO);
+      return { ...current, grid: nextGrid, tiles: normalizeTiles(nextGrid, current.tiles) };
+    });
+  }
+
+  function fitGridToImage(size = canvasSize) {
+    setConfig((current) => {
+      const scale = current.grid.scale ?? 1;
+      const bounds = getRotatedHexBounds(current.grid.hexWidth);
+      const stepX = bounds.width + current.grid.gapX;
+      const stepY = bounds.height * 0.75 + current.grid.gapY;
+      const nextGrid: MapGridConfig = {
+        ...current.grid,
+        hexHeight: Math.round(getRegularHexHeight(current.grid.hexWidth)),
+        offsetX: 0,
+        offsetY: 0,
+        cols: Math.max(1, Math.ceil(size.width / Math.max(1, stepX * scale)) + 1),
+        rows: Math.max(1, Math.ceil(size.height / Math.max(1, stepY * scale)) + 1),
+      };
       return { ...current, grid: nextGrid, tiles: normalizeTiles(nextGrid, current.tiles) };
     });
   }
@@ -132,6 +202,16 @@ export default function MapEditor() {
         if (tile.id !== tileId) return tile;
         if (paintMode === 'terrain') return { ...tile, terrain };
         if (paintMode === 'deployment') return { ...tile, deploymentOwner: deploymentOwner === 'none' ? null : deploymentOwner };
+        if (paintMode === 'background') {
+          const isBackground = backgroundMark === 'background';
+          return {
+            ...tile,
+            isBackground,
+            deploymentOwner: isBackground ? null : tile.deploymentOwner,
+            objectiveType: isBackground ? null : tile.objectiveType,
+            objectiveOwner: isBackground ? null : tile.objectiveOwner,
+          };
+        }
         return {
           ...tile,
           objectiveType: objectiveType === 'none' ? null : objectiveType,
@@ -203,8 +283,17 @@ export default function MapEditor() {
             </label>
           ))}
           <label className="field compactField">
+            <span>显示标注层</span>
+            <input type="checkbox" checked={showGrid} onChange={(event) => setShowGrid(event.target.checked)} />
+          </label>
+          <label className="field compactField">
+            <span>显示标注文字</span>
+            <input type="checkbox" checked={showLabels} onChange={(event) => setShowLabels(event.target.checked)} />
+          </label>
+          <button onClick={() => fitGridToImage()}>网格铺满整图</button>
+          <label className="field compactField">
             <span>gridOpacity</span>
-            <input type="range" min="0.1" max="1" step="0.05" value={gridOpacity} onChange={(event) => setGridOpacity(Number(event.target.value))} />
+            <input type="range" min="0" max="1" step="0.05" value={gridOpacity} onChange={(event) => setGridOpacity(Number(event.target.value))} />
           </label>
         </section>
 
@@ -214,6 +303,7 @@ export default function MapEditor() {
             <button className={paintMode === 'terrain' ? 'active' : ''} onClick={() => setPaintMode('terrain')}>地块</button>
             <button className={paintMode === 'deployment' ? 'active' : ''} onClick={() => setPaintMode('deployment')}>部署</button>
             <button className={paintMode === 'objective' ? 'active' : ''} onClick={() => setPaintMode('objective')}>据点</button>
+            <button className={paintMode === 'background' ? 'active' : ''} onClick={() => setPaintMode('background')}>背景</button>
           </div>
           <label className="field">
             <span>terrain</span>
@@ -233,6 +323,13 @@ export default function MapEditor() {
               {objectiveOptions.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
+          <label className="field">
+            <span>background</span>
+            <select value={backgroundMark} onChange={(event) => setBackgroundMark(event.target.value as (typeof backgroundOptions)[number])}>
+              <option value="background">background</option>
+              <option value="playable">playable</option>
+            </select>
+          </label>
         </section>
 
         <section className="editorGroup actionStack">
@@ -244,20 +341,33 @@ export default function MapEditor() {
 
       <section className="editorStageWrap">
         <div className="editorStage" style={{ width: canvasSize.width, height: canvasSize.height }}>
-          {config.backgroundImage && <img alt="map background" src={config.backgroundImage} />}
-          <svg width={canvasSize.width} height={canvasSize.height} style={{ opacity: gridOpacity }}>
+          {config.backgroundImage && (
+            <img
+              alt="map background"
+              src={config.backgroundImage}
+              onLoad={(event) => setImageSize({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })}
+            />
+          )}
+          <svg width={canvasSize.width} height={canvasSize.height} style={{ opacity: showGrid ? gridOpacity : 0 }}>
             {config.tiles.map((tile) => {
               const center = getTileCenter(tile, config.grid);
               const width = config.grid.hexWidth * (config.grid.scale ?? 1);
-              const height = config.grid.hexHeight * (config.grid.scale ?? 1);
+              const height = getRegularHexHeight(config.grid.hexWidth) * (config.grid.scale ?? 1);
               return (
-                <g className="editorHex" key={tile.id} transform={`translate(${center.x} ${center.y})`} onClick={() => paintTile(tile.id)}>
-                  <polygon points={hexPoints(width, height)} />
-                  <text y="-8">{tile.col},{tile.row}</text>
-                  <text x="-18" y="14">{terrainMarks[tile.terrain]}</text>
-                  <text x="18" y="14">{tile.deploymentOwner === 'qingqiu' ? '青' : tile.deploymentOwner === 'tianmen' ? '天' : ''}</text>
-                  <text y="28">{tile.objectiveType === 'central' ? '中' : tile.objectiveType === 'edge' ? '边' : ''}</text>
-                  <title>{`${tile.id} ${terrainLabels[tile.terrain]} ${tile.deploymentOwner ?? 'none'} ${tile.objectiveType ?? 'none'}`}</title>
+                <g className={`editorHex ${tile.isBackground ? 'backgroundTile' : ''}`} key={tile.id} transform={`translate(${center.x} ${center.y})`} onClick={() => paintTile(tile.id)}>
+                  <polygon points={hexPoints(width, height)} transform={`rotate(${GRID_ROTATION_DEG})`} />
+                  {showLabels && (
+                    <>
+                      <text y="-8">{tile.col},{tile.row}</text>
+                      <text x="-18" y="14">{terrainMarks[tile.terrain]}</text>
+                      <text x="18" y="14">{tile.deploymentOwner === 'qingqiu' ? '青' : tile.deploymentOwner === 'tianmen' ? '天' : ''}</text>
+                      <text y="28">{tile.isBackground ? '背' : tile.objectiveType === 'central' ? '中' : tile.objectiveType === 'edge' ? '边' : ''}</text>
+                    </>
+                  )}
+                  <title>{`${tile.id} ${tile.isBackground ? 'background' : terrainLabels[tile.terrain]} ${tile.deploymentOwner ?? 'none'} ${tile.objectiveType ?? 'none'}`}</title>
                 </g>
               );
             })}

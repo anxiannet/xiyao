@@ -34,6 +34,7 @@ export type MapTileConfig = {
   deploymentOwner: SquadId | null;
   objectiveType: ObjectiveType | null;
   objectiveOwner: ObjectiveOwner | null;
+  isBackground: boolean;
 };
 
 export type MapConfig = {
@@ -61,6 +62,7 @@ const tile = (
   deploymentOwner,
   objectiveType,
   objectiveOwner: objectiveType ? 'neutral' : null,
+  isBackground: false,
 });
 
 const tutorialRows: Array<Array<Pick<MapTileConfig, 'terrain' | 'deploymentOwner' | 'objectiveType'>>> = [

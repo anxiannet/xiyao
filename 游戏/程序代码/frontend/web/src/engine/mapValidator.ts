@@ -13,12 +13,13 @@ export type MapValidationResult = {
 export function validateMap(config: MapConfig): MapValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const playableTiles = config.tiles.filter((tile) => !tile.isBackground);
   const ids = new Set(config.tiles.map((tile) => tile.id));
   const coordinateKeys = new Set(config.tiles.map((tile) => `${tile.q},${tile.r}`));
-  const qingqiuDeployment = config.tiles.filter((tile) => tile.deploymentOwner === 'qingqiu').length;
-  const tianmenDeployment = config.tiles.filter((tile) => tile.deploymentOwner === 'tianmen').length;
-  const centralObjectives = config.tiles.filter((tile) => tile.objectiveType === 'central').length;
-  const edgeObjectives = config.tiles.filter((tile) => tile.objectiveType === 'edge').length;
+  const qingqiuDeployment = playableTiles.filter((tile) => tile.deploymentOwner === 'qingqiu').length;
+  const tianmenDeployment = playableTiles.filter((tile) => tile.deploymentOwner === 'tianmen').length;
+  const centralObjectives = playableTiles.filter((tile) => tile.objectiveType === 'central').length;
+  const edgeObjectives = playableTiles.filter((tile) => tile.objectiveType === 'edge').length;
 
   if (config.tiles.length !== config.grid.rows * config.grid.cols) errors.push('格子数量必须等于 rows x cols');
   if (ids.size !== config.tiles.length) errors.push('格子ID必须唯一');
@@ -29,6 +30,8 @@ export function validateMap(config: MapConfig): MapValidationResult {
   if (edgeObjectives < 1) errors.push('至少1个边缘据点');
 
   for (const tile of config.tiles) {
+    if (tile.isBackground && (tile.deploymentOwner || tile.objectiveType)) errors.push(`背景格不能标注部署或据点：${tile.id}`);
+    if (tile.isBackground) continue;
     if (!tile.deploymentOwner) continue;
     if (tile.objectiveType) errors.push(`据点不能在部署区：${tile.id}`);
     if (tile.terrain === 'obstacle') errors.push(`障碍不能在部署区：${tile.id}`);
