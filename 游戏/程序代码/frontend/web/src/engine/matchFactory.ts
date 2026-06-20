@@ -1,18 +1,22 @@
-import { mapConfigs, type MapId, type SquadId } from '../data/maps';
+import { getMapConfig } from '../data/mapStorage';
+import { type MapId, type SquadId } from '../data/maps';
 import { unitConfigs } from '../data/units';
 import { addLog, type MatchState, type Mode, type TileState, type UnitState } from './rules';
 import { validateMap } from './mapValidator';
 
 export function createMatch(mode: Mode, mapId: MapId, playerSquad: SquadId = 'qingqiu'): MatchState {
-  const config = mapConfigs[mapId];
+  const config = getMapConfig(mapId);
   const validation = validateMap(config);
   const tiles: TileState[] = config.tiles.map((tile) => ({
     id: tile.id,
     q: tile.q,
     r: tile.r,
+    row: tile.row,
+    col: tile.col,
     terrainLayer: tile.terrain,
     deploymentOwner: tile.deploymentOwner,
-    objectiveOwner: tile.terrain === 'central_objective' || tile.terrain === 'edge_objective' ? 'neutral' : undefined,
+    objectiveType: tile.objectiveType,
+    objectiveOwner: tile.objectiveType ? tile.objectiveOwner ?? 'neutral' : undefined,
     statusLayer: [],
   }));
   const units: UnitState[] = unitConfigs.map((unit) => ({

@@ -1,6 +1,6 @@
-import type { MapId, SquadId, TerrainId } from '../data/maps';
+import type { MapId, ObjectiveType, SquadId, TerrainId } from '../data/maps';
 
-export type { MapId, SquadId, TerrainId } from '../data/maps';
+export type { MapId, ObjectiveType, SquadId, TerrainId } from '../data/maps';
 
 export type Phase =
   | 'map_preview'
@@ -51,8 +51,11 @@ export type TileState = {
   id: string;
   q: number;
   r: number;
+  row: number;
+  col: number;
   terrainLayer: TerrainId;
-  deploymentOwner?: SquadId;
+  deploymentOwner: SquadId | null;
+  objectiveType: ObjectiveType | null;
   objectiveOwner?: SquadId | 'neutral';
   statusLayer: TileStatusId[];
 };
@@ -231,7 +234,7 @@ export const hasTileStatusActive = (tile: TileState, status: TileStatusId): bool
   tile.statusLayer.includes(status) && !isTileSuppressed(tile);
 
 export const objectiveTiles = (match: MatchState): TileState[] =>
-  match.tiles.filter((tile) => tile.terrainLayer === 'central_objective' || tile.terrainLayer === 'edge_objective');
+  match.tiles.filter((tile) => tile.objectiveType === 'central' || tile.objectiveType === 'edge');
 
 export const adjacentTiles = (match: MatchState, tileId: string): TileState[] => {
   const origin = getTile(match, tileId);

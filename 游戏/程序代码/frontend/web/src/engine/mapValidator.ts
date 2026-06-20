@@ -17,10 +17,10 @@ export function validateMap(config: MapConfig): MapValidationResult {
   const coordinateKeys = new Set(config.tiles.map((tile) => `${tile.q},${tile.r}`));
   const qingqiuDeployment = config.tiles.filter((tile) => tile.deploymentOwner === 'qingqiu').length;
   const tianmenDeployment = config.tiles.filter((tile) => tile.deploymentOwner === 'tianmen').length;
-  const centralObjectives = config.tiles.filter((tile) => tile.terrain === 'central_objective').length;
-  const edgeObjectives = config.tiles.filter((tile) => tile.terrain === 'edge_objective').length;
+  const centralObjectives = config.tiles.filter((tile) => tile.objectiveType === 'central').length;
+  const edgeObjectives = config.tiles.filter((tile) => tile.objectiveType === 'edge').length;
 
-  if (config.tiles.length !== 35) errors.push('tutorial_battlefield 必须为35格');
+  if (config.tiles.length !== config.grid.rows * config.grid.cols) errors.push('格子数量必须等于 rows x cols');
   if (ids.size !== config.tiles.length) errors.push('格子ID必须唯一');
   if (coordinateKeys.size !== config.tiles.length) errors.push('坐标必须唯一');
   if (qingqiuDeployment !== 4) errors.push('青丘部署格必须为4');
@@ -30,7 +30,7 @@ export function validateMap(config: MapConfig): MapValidationResult {
 
   for (const tile of config.tiles) {
     if (!tile.deploymentOwner) continue;
-    if (tile.terrain === 'central_objective' || tile.terrain === 'edge_objective') errors.push(`据点不能在部署区：${tile.id}`);
+    if (tile.objectiveType) errors.push(`据点不能在部署区：${tile.id}`);
     if (tile.terrain === 'obstacle') errors.push(`障碍不能在部署区：${tile.id}`);
   }
 

@@ -7,66 +7,136 @@ export type TerrainId =
   | 'cover_shadow'
   | 'dusk_rift'
   | 'obstacle';
+export type ObjectiveType = 'central' | 'edge';
+export type ObjectiveOwner = SquadId | 'neutral';
 export type MapId = 'tutorial_battlefield';
+
+export type MapGridConfig = {
+  rows: number;
+  cols: number;
+  hexWidth: number;
+  hexHeight: number;
+  offsetX: number;
+  offsetY: number;
+  gapX: number;
+  gapY: number;
+  scale?: number;
+  viewMode: 'image_overlay';
+};
 
 export type MapTileConfig = {
   id: string;
   q: number;
   r: number;
+  row: number;
+  col: number;
   terrain: TerrainId;
-  deploymentOwner?: SquadId;
+  deploymentOwner: SquadId | null;
+  objectiveType: ObjectiveType | null;
+  objectiveOwner: ObjectiveOwner | null;
 };
 
 export type MapConfig = {
   id: MapId;
   name: string;
-  typeNote: string;
+  typeNote?: string;
+  backgroundImage: string;
+  grid: MapGridConfig;
   tiles: MapTileConfig[];
 };
 
-const terrainByCode: Record<string, TerrainId> = {
-  P: 'plain',
-  CO: 'central_objective',
-  EO: 'edge_objective',
-  H: 'high_ground',
-  S: 'cover_shadow',
-  R: 'dusk_rift',
-  OB: 'obstacle',
-  TP: 'plain',
-  QP: 'plain',
-};
+const tile = (
+  row: number,
+  col: number,
+  terrain: TerrainId = 'plain',
+  deploymentOwner: SquadId | null = null,
+  objectiveType: ObjectiveType | null = null,
+): MapTileConfig => ({
+  id: `${col},${row}`,
+  q: col,
+  r: row,
+  row,
+  col,
+  terrain,
+  deploymentOwner,
+  objectiveType,
+  objectiveOwner: objectiveType ? 'neutral' : null,
+});
 
-const layout = [
-  ['OB', 'EO', 'P', 'EO', 'OB'],
-  ['TP', 'TP', 'H', 'TP', 'TP'],
-  ['P', 'S', 'P', 'S', 'P'],
-  ['R', 'P', 'CO', 'P', 'R'],
-  ['P', 'S', 'P', 'S', 'P'],
-  ['QP', 'QP', 'H', 'QP', 'QP'],
-  ['OB', 'EO', 'P', 'EO', 'OB'],
-] as const;
+const tutorialRows: Array<Array<Pick<MapTileConfig, 'terrain' | 'deploymentOwner' | 'objectiveType'>>> = [
+  [
+    { terrain: 'obstacle', deploymentOwner: null, objectiveType: null },
+    { terrain: 'edge_objective', deploymentOwner: null, objectiveType: 'edge' },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'edge_objective', deploymentOwner: null, objectiveType: 'edge' },
+    { terrain: 'obstacle', deploymentOwner: null, objectiveType: null },
+  ],
+  [
+    { terrain: 'plain', deploymentOwner: 'tianmen', objectiveType: null },
+    { terrain: 'plain', deploymentOwner: 'tianmen', objectiveType: null },
+    { terrain: 'high_ground', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: 'tianmen', objectiveType: null },
+    { terrain: 'plain', deploymentOwner: 'tianmen', objectiveType: null },
+  ],
+  [
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'cover_shadow', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'cover_shadow', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+  ],
+  [
+    { terrain: 'dusk_rift', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'central_objective', deploymentOwner: null, objectiveType: 'central' },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'dusk_rift', deploymentOwner: null, objectiveType: null },
+  ],
+  [
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'cover_shadow', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'cover_shadow', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+  ],
+  [
+    { terrain: 'plain', deploymentOwner: 'qingqiu', objectiveType: null },
+    { terrain: 'plain', deploymentOwner: 'qingqiu', objectiveType: null },
+    { terrain: 'high_ground', deploymentOwner: null, objectiveType: null },
+    { terrain: 'plain', deploymentOwner: 'qingqiu', objectiveType: null },
+    { terrain: 'plain', deploymentOwner: 'qingqiu', objectiveType: null },
+  ],
+  [
+    { terrain: 'obstacle', deploymentOwner: null, objectiveType: null },
+    { terrain: 'edge_objective', deploymentOwner: null, objectiveType: 'edge' },
+    { terrain: 'plain', deploymentOwner: null, objectiveType: null },
+    { terrain: 'edge_objective', deploymentOwner: null, objectiveType: 'edge' },
+    { terrain: 'obstacle', deploymentOwner: null, objectiveType: null },
+  ],
+];
 
-function deploymentOwner(code: string): SquadId | undefined {
-  if (code === 'TP') return 'tianmen';
-  if (code === 'QP') return 'qingqiu';
-  return undefined;
-}
-
-const tutorialTiles: MapTileConfig[] = layout.flatMap((row, r) =>
-  row.map((code, q) => ({
-    id: `${q},${r}`,
-    q,
-    r,
-    terrain: terrainByCode[code],
-    deploymentOwner: deploymentOwner(code),
-  })),
+const tutorialTiles: MapTileConfig[] = tutorialRows.flatMap((row, rowIndex) =>
+  row.map((item, colIndex) => tile(rowIndex, colIndex, item.terrain, item.deploymentOwner, item.objectiveType)),
 );
 
 export const mapConfigs: Record<MapId, MapConfig> = {
   tutorial_battlefield: {
     id: 'tutorial_battlefield',
-    name: 'tutorial_battlefield｜青丘对天门正式测试地图',
-    typeNote: '5列x7行正式测试图：上方天门阵地、中部中央争夺区、下方青丘阵地；高台为阵地输出位，裂隙为中央两侧律令价值区。',
+    name: '教学测试战场',
+    typeNote: '人工标注地图：背景图由整张图片提供，程序只覆盖网格、单位和状态。',
+    backgroundImage: '/maps/tutorial_battlefield.png',
+    grid: {
+      rows: 7,
+      cols: 5,
+      hexWidth: 96,
+      hexHeight: 84,
+      offsetX: 90,
+      offsetY: 70,
+      gapX: 0,
+      gapY: 0,
+      scale: 1,
+      viewMode: 'image_overlay',
+    },
     tiles: tutorialTiles,
   },
 };

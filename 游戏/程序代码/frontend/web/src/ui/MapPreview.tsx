@@ -1,8 +1,9 @@
-import { mapConfigs, type MapId } from '../data/maps';
+import { getMapConfig } from '../data/mapStorage';
+import { type MapId } from '../data/maps';
 import { validateMap } from '../engine/mapValidator';
 
 export default function MapPreview({ mapId, locked, onStartDeployment }: { mapId: MapId; locked: boolean; onStartDeployment: () => void }) {
-  const config = mapConfigs[mapId];
+  const config = getMapConfig(mapId);
   const validation = validateMap(config);
   return (
     <section className="card preview">

@@ -31,7 +31,7 @@ export function generateLegalActions(match: MatchState, unitId = match.selectedU
 
   if (unit.ap >= 1) {
     actions.push(...generateSkillActions(match, unit.id));
-    if (match.tiles.some((tile) => tile.objectiveOwner && objectiveRangeContains(match, tile.id, unit.tileId))) {
+    if (match.tiles.some((tile) => tile.objectiveType && objectiveRangeContains(match, tile.id, unit.tileId))) {
       actions.push({ id: id('capture'), type: 'capture', unitId: unit.id, actor: unit.squad, label: '占领据点' });
     }
   }
@@ -94,7 +94,5 @@ export function objectiveRangeContains(match: MatchState, objectiveTileId: strin
   const objective = getTile(match, objectiveTileId);
   const unitTile = getTile(match, unitTileId);
   if (!objective || !unitTile) return false;
-  if (objective.terrainLayer === 'central_objective') return hexDistance(objective, unitTile) <= 1;
-  if (objective.terrainLayer === 'edge_objective') return objective.id === unitTile.id;
-  return false;
+  return Boolean(objective.objectiveType) && objective.id === unitTile.id;
 }

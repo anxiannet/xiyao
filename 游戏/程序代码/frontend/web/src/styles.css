@@ -12,7 +12,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% 0%, rgba(201,168,106,.18), transparent 36%), var(--ink); }
-button, select { font: inherit; color: inherit; border: 1px solid var(--line); background: rgba(12, 16, 22, .72); }
+button, select, input, textarea { font: inherit; color: inherit; border: 1px solid var(--line); background: rgba(12, 16, 22, .72); }
 button { cursor: pointer; }
 button:disabled { opacity: .42; cursor: not-allowed; }
 button:hover:not(:disabled), select:hover { border-color: var(--dusk-gold); }
@@ -23,7 +23,7 @@ button:hover:not(:disabled), select:hover { border-color: var(--dusk-gold); }
 .homebar { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; align-items: end; }
 .field { display: grid; gap: 4px; min-width: 160px; }
 .field span { font-size: 12px; opacity: .75; }
-select, button { padding: 9px 11px; }
+select, button, input { padding: 9px 11px; }
 .mobileHome { min-height: 100vh; max-width: 760px; margin: 0 auto; padding: 10px 10px 96px; background: radial-gradient(circle at 52% 14%, rgba(184,90,60,.28), transparent 24%), radial-gradient(circle at 70% 44%, rgba(79,163,165,.18), transparent 30%), linear-gradient(180deg, #0c1116, #161c23 48%, #0d1116); border-left: 1px solid rgba(201,168,106,.28); border-right: 1px solid rgba(201,168,106,.28); }
 .homeTop { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: repeat(3, auto) 1fr; gap: 8px; align-items: center; padding: 10px 8px; background: rgba(8,12,16,.94); border: 1px solid rgba(201,168,106,.28); }
 .homeTop button { border: 0; background: transparent; color: #e7c98e; padding: 6px; }
@@ -203,6 +203,157 @@ select, button { padding: 9px 11px; }
 .viewSwitch button.active {
   border-color: #c9a86a;
   background: rgba(201,168,106,.22);
+}
+
+.mapEditor {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  background: #141a21;
+}
+
+.editorPanel {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+  padding: 14px;
+  border-right: 1px solid var(--line);
+  background: rgba(18, 23, 29, .96);
+}
+
+.editorPanel header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.editorPanel h1,
+.editorPanel h2 {
+  margin: 0;
+  color: var(--dusk-gold);
+}
+
+.editorPanel h1 {
+  font-size: 24px;
+}
+
+.editorPanel h2 {
+  font-size: 15px;
+}
+
+.editorPanel a {
+  color: #d8d2bf;
+}
+
+.editorPanel .field {
+  margin-bottom: 10px;
+}
+
+.editorPanel input,
+.editorPanel select,
+.editorPanel textarea {
+  width: 100%;
+}
+
+.editorGroup {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(201,168,106,.22);
+}
+
+.compactField {
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+}
+
+.compactField span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.segmented button.active {
+  border-color: var(--dusk-gold);
+  background: rgba(201,168,106,.22);
+}
+
+.actionStack button {
+  width: 100%;
+}
+
+.editorStageWrap {
+  min-width: 0;
+  height: 100vh;
+  overflow: auto;
+  padding: 16px;
+}
+
+.editorStage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #202832;
+}
+
+.editorStage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.editorStage svg {
+  position: absolute;
+  inset: 0;
+}
+
+.editorHex {
+  cursor: pointer;
+}
+
+.editorHex polygon {
+  fill: rgba(0, 0, 0, .08);
+  stroke: rgba(244, 214, 151, .92);
+  stroke-width: 2;
+}
+
+.editorHex:hover polygon {
+  fill: rgba(201, 168, 106, .2);
+  stroke: #ffe08a;
+}
+
+.editorHex text {
+  fill: #fff1d2;
+  paint-order: stroke;
+  stroke: #111;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.exportBox {
+  display: block;
+  width: min(980px, 100%);
+  min-height: 240px;
+  margin-top: 14px;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .belowMap {

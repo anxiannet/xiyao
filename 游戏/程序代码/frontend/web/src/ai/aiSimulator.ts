@@ -1,4 +1,5 @@
-import { mapConfigs, type MapId, type SquadId } from '../data/maps';
+import { getMapConfig, getMapConfigs } from '../data/mapStorage';
+import { type MapId, type SquadId } from '../data/maps';
 import { autoDeploySquad } from '../engine/deployment';
 import { createMatch } from '../engine/matchFactory';
 import { validateMap } from '../engine/mapValidator';
@@ -38,7 +39,7 @@ export type AIBatchProgress = {
 
 export function prepareAIVsAIMatch(mapId: MapId): MatchState {
   let match = createMatch('AI vs AI', mapId, 'qingqiu');
-  const validation = validateMap(mapConfigs[mapId]);
+  const validation = validateMap(getMapConfig(mapId));
   if (!validation.ok) return match;
   match = { ...match, phase: 'deployment' };
   match = autoDeploySquad(autoDeploySquad(match, 'qingqiu'), 'tianmen');
@@ -163,7 +164,7 @@ export async function runBatchAITestAsync(
   batchSize = 10,
   onProgress?: (progress: AIBatchProgress, summary: SimulationSummary) => void,
 ): Promise<SimulationSummary> {
-  const mapIds = Object.keys(mapConfigs) as MapId[];
+  const mapIds = Object.keys(getMapConfigs()) as MapId[];
   const summary = createSummary(total);
   let progress = createProgress(total);
   let normalGames = 0;

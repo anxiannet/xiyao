@@ -40,8 +40,8 @@ export function scoreAction(match: MatchState, action: GameAction): ScoredAction
     }, null as null | { tile: typeof targetTile; distance: number });
     if (nearestObjective) breakdown.position += Math.max(0, 12 - nearestObjective.distance * 3);
     if (targetTile.terrainLayer === 'dusk_rift' && unit.squad === 'qingqiu') breakdown.resource += 10;
-    if (targetTile.terrainLayer === 'central_objective') breakdown.objective += 14;
-    if (targetTile.terrainLayer === 'edge_objective') breakdown.objective += 10;
+    if (targetTile.objectiveType === 'central') breakdown.objective += 14;
+    if (targetTile.objectiveType === 'edge') breakdown.objective += 10;
   }
 
   if (action.type === 'capture') breakdown.objective += 22;

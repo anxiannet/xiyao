@@ -7,7 +7,7 @@ import { createMatch } from '../engine/matchFactory';
 import { validateMap } from '../engine/mapValidator';
 import { beginFirstRound } from '../engine/turnManager';
 import type { DecreeId, GameAction, MatchState } from '../engine/rules';
-import { mapConfigs } from '../data/maps';
+import { getMapConfig } from '../data/mapStorage';
 import { saveCurrentMatch } from '../storage/localMatchStorage';
 import { loadAIStats } from '../storage/localStatsStorage';
 import ActionPanel from './ActionPanel';
@@ -36,7 +36,7 @@ export default function App() {
   const [effect, setEffect] = React.useState<DecreeId | null>(null);
   const [match, setMatch] = React.useState<MatchState>(() => createMatch(FIXED_MODE, FIXED_MAP_ID, FIXED_PLAYER_SQUAD));
   const legalActions = React.useMemo(() => generateLegalActions(match), [match]);
-  const validation = React.useMemo(() => validateMap(mapConfigs[match.mapId]), [match.mapId]);
+  const validation = React.useMemo(() => validateMap(getMapConfig(match.mapId)), [match.mapId]);
   const playerDeployUnits = match.units.filter((unit) => unit.squad === match.playerSquad && !unit.summon);
   const allDeployed = allFormalUnitsDeployed(match);
   const aiBatchProgress = React.useMemo<AIBatchProgress>(() => ({
@@ -64,7 +64,7 @@ export default function App() {
   }, [match.logs]);
 
   function startDeployment() {
-    const validation = validateMap(mapConfigs[match.mapId]);
+    const validation = validateMap(getMapConfig(match.mapId));
     if (!validation.ok) return;
     setSelectedDeployUnitId(null);
     setMatch((current) => autoDeploySquad({ ...current, phase: 'deployment' }, 'tianmen'));

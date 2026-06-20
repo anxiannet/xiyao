@@ -4,7 +4,7 @@ export function calculateFortune(match: MatchState): Record<SquadId, number> {
   const fortune: Record<SquadId, number> = { qingqiu: 0, tianmen: 0 };
   for (const tile of objectiveTiles(match)) {
     if (tile.objectiveOwner === 'qingqiu' || tile.objectiveOwner === 'tianmen') {
-      fortune[tile.objectiveOwner] += tile.terrainLayer === 'central_objective' ? 2 : 1;
+      fortune[tile.objectiveOwner] += tile.objectiveType === 'central' ? 2 : 1;
     }
   }
   fortune.qingqiu += match.metrics.kills.qingqiu;
