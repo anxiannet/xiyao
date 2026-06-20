@@ -122,9 +122,9 @@ const tutorialTiles: MapTileConfig[] = tutorialRows.flatMap((row, rowIndex) =>
 export const mapConfigs: Record<MapId, MapConfig> = {
   tutorial_battlefield: {
     id: 'tutorial_battlefield',
-    name: '教学测试战场',
-    typeNote: '人工标注地图：背景图由整张图片提供，程序只覆盖网格、单位和状态。',
-    backgroundImage: '/maps/tutorial_battlefield.png',
+    name: '青丘谷地图',
+    typeNote: '青丘谷人工标注地图：背景图由整张图片提供，程序只覆盖网格、单位和状态。',
+    backgroundImage: '/maps/qingqiu_valley.png',
     grid: {
       rows: 7,
       cols: 5,
