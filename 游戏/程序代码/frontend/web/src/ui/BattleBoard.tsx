@@ -1,17 +1,20 @@
 import React from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
-import { terrainName, type DecreeId, type GameAction, type MatchState, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
-import terrainCentralObjectiveNeutralUrl from '../assets/tiles/central-objective-200.png';
+import { type DecreeId, type GameAction, type MatchState, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
+import terrainCentralObjectiveNeutralUrl from '../assets/split-terrain/terrain_central_objective_neutral.png';
 import terrainCentralObjectiveQingqiuUrl from '../assets/split-terrain/terrain_central_objective_qingqiu.png';
 import terrainCentralObjectiveTianmenUrl from '../assets/split-terrain/terrain_central_objective_tianmen.png';
 import terrainCoverShadowUrl from '../assets/split-terrain/terrain_cover_shadow.png';
-import terrainDuskRiftUrl from '../assets/dusk-rift-tile-200.png';
+import terrainDuskRiftUrl from '../assets/split-terrain/terrain_dusk_rift_blue.png';
 import terrainEdgeObjectiveNeutralUrl from '../assets/split-terrain/terrain_edge_objective_neutral.png';
 import terrainEdgeObjectiveQingqiuUrl from '../assets/split-terrain/terrain_edge_objective_qingqiu.png';
 import terrainEdgeObjectiveTianmenUrl from '../assets/split-terrain/terrain_edge_objective_tianmen.png';
 import terrainHighGroundUrl from '../assets/split-terrain/terrain_high_ground.png';
-import terrainObstacleUrl from '../assets/split-terrain/terrain_obstacle_ruined_wall.png';
-import terrainPlainUrl from '../assets/tiles/plain-grass-200.png';
+import terrainObstacleBoulderUrl from '../assets/split-terrain/terrain_obstacle_boulder.png';
+import terrainObstacleRuinedWallUrl from '../assets/split-terrain/terrain_obstacle_ruined_wall.png';
+import terrainPlainDirtUrl from '../assets/split-terrain/terrain_plain_dirt.png';
+import terrainPlainGrassUrl from '../assets/split-terrain/terrain_plain_grass.png';
+import terrainPlainStoneUrl from '../assets/split-terrain/terrain_plain_stone.png';
 import statusFoxfireRemnantUrl from '../assets/split-terrain/status_foxfire_remnant.png';
 import statusInspectionZoneUrl from '../assets/split-terrain/status_inspection_zone.png';
 import sulingLeftBackUrl from '../assets/units/suling/suling_left_back.png';
@@ -48,8 +51,11 @@ const assetUrls = {
   terrainEdgeObjectiveQingqiu: terrainEdgeObjectiveQingqiuUrl,
   terrainEdgeObjectiveTianmen: terrainEdgeObjectiveTianmenUrl,
   terrainHighGround: terrainHighGroundUrl,
-  terrainObstacle: terrainObstacleUrl,
-  terrainPlain: terrainPlainUrl,
+  terrainObstacleBoulder: terrainObstacleBoulderUrl,
+  terrainObstacleRuinedWall: terrainObstacleRuinedWallUrl,
+  terrainPlainDirt: terrainPlainDirtUrl,
+  terrainPlainGrass: terrainPlainGrassUrl,
+  terrainPlainStone: terrainPlainStoneUrl,
   statusFoxfireRemnant: statusFoxfireRemnantUrl,
   statusInspectionZone: statusInspectionZoneUrl,
   unitSulingLeftBack: sulingLeftBackUrl,
@@ -129,12 +135,19 @@ function getUnitAt(units: UnitState[], tileId: string) {
   return units.find((unit) => unit.tileId === tileId && !unit.defeated);
 }
 
+const plainTerrainAssetKeys = ['terrainPlainGrass', 'terrainPlainDirt', 'terrainPlainStone'] as const;
+const obstacleTerrainAssetKeys = ['terrainObstacleBoulder', 'terrainObstacleRuinedWall'] as const;
+
+function stableTileVariant(tile: TileState, count: number) {
+  return Math.abs(tile.q * 17 + tile.r * 31) % count;
+}
+
 function getTerrainAssetKey(tile: TileState): AssetKey {
-  if (tile.terrainLayer === 'plain') return 'terrainPlain';
+  if (tile.terrainLayer === 'plain') return plainTerrainAssetKeys[stableTileVariant(tile, plainTerrainAssetKeys.length)];
   if (tile.terrainLayer === 'high_ground') return 'terrainHighGround';
   if (tile.terrainLayer === 'cover_shadow') return 'terrainCoverShadow';
   if (tile.terrainLayer === 'dusk_rift') return 'terrainDuskRift';
-  if (tile.terrainLayer === 'obstacle') return 'terrainObstacle';
+  if (tile.terrainLayer === 'obstacle') return obstacleTerrainAssetKeys[stableTileVariant(tile, obstacleTerrainAssetKeys.length)];
   if (tile.terrainLayer === 'central_objective') {
     if (tile.objectiveOwner === 'qingqiu') return 'terrainCentralObjectiveQingqiu';
     if (tile.objectiveOwner === 'tianmen') return 'terrainCentralObjectiveTianmen';
@@ -143,6 +156,32 @@ function getTerrainAssetKey(tile: TileState): AssetKey {
   if (tile.objectiveOwner === 'qingqiu') return 'terrainEdgeObjectiveQingqiu';
   if (tile.objectiveOwner === 'tianmen') return 'terrainEdgeObjectiveTianmen';
   return 'terrainEdgeObjectiveNeutral';
+}
+
+function drawHexPath(graphics: Graphics) {
+  graphics.moveTo(-HEX_DRAW_W / 2, -HEX_DRAW_H / 4);
+  graphics.lineTo(0, -HEX_DRAW_H / 2);
+  graphics.lineTo(HEX_DRAW_W / 2, -HEX_DRAW_H / 4);
+  graphics.lineTo(HEX_DRAW_W / 2, HEX_DRAW_H / 4);
+  graphics.lineTo(0, HEX_DRAW_H / 2);
+  graphics.lineTo(-HEX_DRAW_W / 2, HEX_DRAW_H / 4);
+  graphics.closePath();
+}
+
+function addMaskedTileSprite(layer: Container, texture: Texture, x: number, y: number, size = TILE_SPRITE_SIZE, alpha = 1) {
+  const group = new Container();
+  group.position.set(x, y);
+  const sprite = new Sprite(texture);
+  sprite.anchor.set(0.5);
+  sprite.width = size;
+  sprite.height = size;
+  sprite.alpha = alpha;
+  const mask = new Graphics();
+  drawHexPath(mask);
+  mask.fill({ color: 0xffffff, alpha: 1 });
+  sprite.mask = mask;
+  group.addChild(sprite, mask);
+  layer.addChild(group);
 }
 
 function addCenteredTileSprite(layer: Container, texture: Texture, x: number, y: number, size = TILE_SPRITE_SIZE, alpha = 1) {
@@ -241,10 +280,10 @@ export default function BattleBoard({
     const width = bounds.maxX - bounds.minX;
     const height = bounds.maxY - bounds.minY;
     const scale = viewMode === 'battle'
-      ? Math.min(app.renderer.width / width, app.renderer.height / height) * 0.98
-      : Math.min(app.renderer.width / (width * 0.84), app.renderer.height / (height * 0.84)) * 0.96;
+      ? Math.min(app.renderer.width / width, app.renderer.height / height) * 1.18
+      : Math.min(app.renderer.width / (width * 0.84), app.renderer.height / (height * 0.84)) * 1.08;
     const offsetX = app.renderer.width / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
-    const offsetY = app.renderer.height / 2 - ((bounds.minY + bounds.maxY) / 2) * scale + (viewMode === 'battle' ? 12 : 0);
+    const offsetY = app.renderer.height / 2 - ((bounds.minY + bounds.maxY) / 2) * scale + (viewMode === 'battle' ? -62 : -34);
     for (const layer of [layers.terrain, layers.status, layers.unit]) {
       layer.scale.set(scale);
       layer.position.set(offsetX, offsetY);
@@ -276,23 +315,12 @@ export default function BattleBoard({
 
       const terrainTexture = assetTexturesRef.current[getTerrainAssetKey(tile)];
       if (terrainTexture) {
-        addCenteredTileSprite(layers.terrain, terrainTexture, x, y);
+        addMaskedTileSprite(layers.terrain, terrainTexture, x, y);
         const rim = new Graphics();
         drawHex(rim, 0x000000, colors.line, 0);
         rim.position.set(x, y);
         layers.terrain.addChild(rim);
       }
-
-      if (tile.terrainLayer !== 'plain') {
-        const label = makeText(tile.deploymentOwner ? squadColors[tile.deploymentOwner].mark : colors.label, tile.terrainLayer === 'central_objective' ? 24 : 18);
-        label.position.set(x, y - 2);
-        layers.terrain.addChild(label);
-      }
-
-      const name = makeText(terrainName[tile.terrainLayer], 9, 0xf3dfad);
-      name.alpha = viewMode === 'tactical' ? 0.9 : 0.38;
-      name.position.set(x, y + 17);
-      layers.terrain.addChild(name);
 
       if (tile.objectiveOwner && tile.objectiveOwner !== 'neutral') {
         const owner = makeText(tile.objectiveOwner === 'qingqiu' ? '狐' : '令', 12, 0xffe7a8);
