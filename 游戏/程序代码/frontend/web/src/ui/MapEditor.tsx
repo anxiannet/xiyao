@@ -148,6 +148,7 @@ export default function MapEditor() {
   const [showGrid, setShowGrid] = React.useState(true);
   const [showLabels, setShowLabels] = React.useState(false);
   const [gridOpacity, setGridOpacity] = React.useState(0.82);
+  const [stageZoom, setStageZoom] = React.useState(1);
   const fallbackCanvasSize = React.useMemo(() => getCanvasSize(config.grid), [config.grid]);
   const canvasSize = imageSize ?? fallbackCanvasSize;
   const exportText = React.useMemo(() => formatMapConfigs(config), [config]);
@@ -295,6 +296,16 @@ export default function MapEditor() {
             <span>gridOpacity</span>
             <input type="range" min="0" max="1" step="0.05" value={gridOpacity} onChange={(event) => setGridOpacity(Number(event.target.value))} />
           </label>
+          <label className="field compactField">
+            <span>整体缩放</span>
+            <input type="range" min="0.25" max="2.5" step="0.05" value={stageZoom} onChange={(event) => setStageZoom(Number(event.target.value))} />
+          </label>
+          <div className="zoomButtons">
+            <button onClick={() => setStageZoom((current) => Math.max(0.25, Number((current - 0.1).toFixed(2))))}>缩小</button>
+            <button onClick={() => setStageZoom(1)}>100%</button>
+            <button onClick={() => setStageZoom((current) => Math.min(2.5, Number((current + 0.1).toFixed(2))))}>放大</button>
+            <span>{Math.round(stageZoom * 100)}%</span>
+          </div>
         </section>
 
         <section className="editorGroup">
@@ -340,38 +351,40 @@ export default function MapEditor() {
       </aside>
 
       <section className="editorStageWrap">
-        <div className="editorStage" style={{ width: canvasSize.width, height: canvasSize.height }}>
-          {config.backgroundImage && (
-            <img
-              alt="map background"
-              src={config.backgroundImage}
-              onLoad={(event) => setImageSize({
-                width: event.currentTarget.naturalWidth,
-                height: event.currentTarget.naturalHeight,
+        <div className="editorZoomFrame" style={{ width: canvasSize.width * stageZoom, height: canvasSize.height * stageZoom }}>
+          <div className="editorStage" style={{ width: canvasSize.width, height: canvasSize.height, transform: `scale(${stageZoom})` }}>
+            {config.backgroundImage && (
+              <img
+                alt="map background"
+                src={config.backgroundImage}
+                onLoad={(event) => setImageSize({
+                  width: event.currentTarget.naturalWidth,
+                  height: event.currentTarget.naturalHeight,
+                })}
+              />
+            )}
+            <svg width={canvasSize.width} height={canvasSize.height} style={{ opacity: showGrid ? gridOpacity : 0 }}>
+              {config.tiles.map((tile) => {
+                const center = getTileCenter(tile, config.grid);
+                const width = config.grid.hexWidth * (config.grid.scale ?? 1);
+                const height = getRegularHexHeight(config.grid.hexWidth) * (config.grid.scale ?? 1);
+                return (
+                  <g className={`editorHex ${tile.isBackground ? 'backgroundTile' : ''}`} key={tile.id} transform={`translate(${center.x} ${center.y})`} onClick={() => paintTile(tile.id)}>
+                    <polygon points={hexPoints(width, height)} transform={`rotate(${GRID_ROTATION_DEG})`} />
+                    {showLabels && (
+                      <>
+                        <text y="-8">{tile.col},{tile.row}</text>
+                        <text x="-18" y="14">{terrainMarks[tile.terrain]}</text>
+                        <text x="18" y="14">{tile.deploymentOwner === 'qingqiu' ? '青' : tile.deploymentOwner === 'tianmen' ? '天' : ''}</text>
+                        <text y="28">{tile.isBackground ? '背' : tile.objectiveType === 'central' ? '中' : tile.objectiveType === 'edge' ? '边' : ''}</text>
+                      </>
+                    )}
+                    <title>{`${tile.id} ${tile.isBackground ? 'background' : terrainLabels[tile.terrain]} ${tile.deploymentOwner ?? 'none'} ${tile.objectiveType ?? 'none'}`}</title>
+                  </g>
+                );
               })}
-            />
-          )}
-          <svg width={canvasSize.width} height={canvasSize.height} style={{ opacity: showGrid ? gridOpacity : 0 }}>
-            {config.tiles.map((tile) => {
-              const center = getTileCenter(tile, config.grid);
-              const width = config.grid.hexWidth * (config.grid.scale ?? 1);
-              const height = getRegularHexHeight(config.grid.hexWidth) * (config.grid.scale ?? 1);
-              return (
-                <g className={`editorHex ${tile.isBackground ? 'backgroundTile' : ''}`} key={tile.id} transform={`translate(${center.x} ${center.y})`} onClick={() => paintTile(tile.id)}>
-                  <polygon points={hexPoints(width, height)} transform={`rotate(${GRID_ROTATION_DEG})`} />
-                  {showLabels && (
-                    <>
-                      <text y="-8">{tile.col},{tile.row}</text>
-                      <text x="-18" y="14">{terrainMarks[tile.terrain]}</text>
-                      <text x="18" y="14">{tile.deploymentOwner === 'qingqiu' ? '青' : tile.deploymentOwner === 'tianmen' ? '天' : ''}</text>
-                      <text y="28">{tile.isBackground ? '背' : tile.objectiveType === 'central' ? '中' : tile.objectiveType === 'edge' ? '边' : ''}</text>
-                    </>
-                  )}
-                  <title>{`${tile.id} ${tile.isBackground ? 'background' : terrainLabels[tile.terrain]} ${tile.deploymentOwner ?? 'none'} ${tile.objectiveType ?? 'none'}`}</title>
-                </g>
-              );
-            })}
-          </svg>
+            </svg>
+          </div>
         </div>
         <textarea className="exportBox" readOnly value={exportText} />
       </section>

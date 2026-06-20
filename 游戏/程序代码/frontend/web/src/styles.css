@@ -290,6 +290,20 @@ select, button, input { padding: 9px 11px; }
   width: 100%;
 }
 
+.zoomButtons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.zoomButtons span {
+  color: #d8d2bf;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  text-align: right;
+}
+
 .editorStageWrap {
   min-width: 0;
   height: 100vh;
@@ -297,11 +311,16 @@ select, button, input { padding: 9px 11px; }
   padding: 16px;
 }
 
+.editorZoomFrame {
+  position: relative;
+}
+
 .editorStage {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--line);
   background: #202832;
+  transform-origin: top left;
 }
 
 .editorStage img {
