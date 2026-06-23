@@ -2,11 +2,9 @@ import { getMapConfig } from '../data/mapStorage';
 import { type MapId, type SquadId } from '../data/maps';
 import { unitConfigs } from '../data/units';
 import { addLog, type MatchState, type Mode, type TileState, type UnitState } from './rules';
-import { validateMap } from './mapValidator';
 
 export function createMatch(mode: Mode, mapId: MapId, playerSquad: SquadId = 'qingqiu'): MatchState {
   const config = getMapConfig(mapId);
-  const validation = validateMap(config);
   const tiles: TileState[] = config.tiles
     .filter((tile) => !tile.isBackground)
     .map((tile) => ({
@@ -62,6 +60,5 @@ export function createMatch(mode: Mode, mapId: MapId, playerSquad: SquadId = 'qi
       firstActor: 'qingqiu',
     },
   };
-  match = addLog(match, 'match_created', `创建对局：${mode} / ${config.name}`);
-  return addLog(match, 'map_validated', validation.ok ? '地图校验通过' : validation.errors.join('；'), validation);
+  return addLog(match, 'match_created', `创建对局：${mode} / ${config.name}`);
 }

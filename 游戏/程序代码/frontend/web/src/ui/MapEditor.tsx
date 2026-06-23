@@ -118,18 +118,23 @@ function hexPoints(width: number, height: number) {
 }
 
 function loadDraft(): MapConfig {
+  const source = mapConfigs.tutorial_battlefield;
   if (typeof window !== 'undefined') {
     try {
       const raw = window.localStorage.getItem(MAP_EDITOR_DRAFT_KEY);
       if (raw) {
         const draft = JSON.parse(raw) as MapConfig;
+        const sourceTileIds = source.tiles.map((tile) => tile.id).join('|');
+        const draftTileIds = draft.tiles.map((tile) => tile.id).join('|');
+        const hasMatchingGrid = JSON.stringify(draft.grid) === JSON.stringify(source.grid) && draftTileIds === sourceTileIds;
+        if (!hasMatchingGrid) return source;
         return { ...draft, tiles: normalizeTiles(draft.grid, draft.tiles) };
       }
     } catch {
       // Ignore corrupted drafts and fall back to the checked-in map.
     }
   }
-  return mapConfigs.tutorial_battlefield;
+  return source;
 }
 
 function formatMapConfigs(config: MapConfig) {

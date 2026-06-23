@@ -22,8 +22,7 @@ export function loadStoredMapConfigs(): Partial<Record<MapId, MapConfig>> | null
 }
 
 export function getMapConfigs(): Record<MapId, MapConfig> {
-  const stored = loadStoredMapConfigs();
-  return { ...mapConfigs, ...stored };
+  return mapConfigs;
 }
 
 export function getMapConfig(mapId: MapId): MapConfig {

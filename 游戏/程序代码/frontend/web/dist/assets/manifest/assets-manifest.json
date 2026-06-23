@@ -1,0 +1,955 @@
+{
+  "version": "v0.1.0-mvp",
+  "generatedFor": "tutorial_battlefield player_vs_ai",
+  "assets": [
+    {
+      "id": "battle_scroll_wash",
+      "path": "/assets/backgrounds/battle_scroll_wash.png",
+      "type": "background",
+      "usedBy": [
+        "screens"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "竖屏卷轴背景洗色"
+    },
+    {
+      "id": "effect_attack_slash",
+      "path": "/assets/effects/combat/effect_attack_slash.png",
+      "type": "combatEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "攻击斩击"
+    },
+    {
+      "id": "effect_capture_glow",
+      "path": "/assets/effects/combat/effect_capture_glow.png",
+      "type": "combatEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "占领辉光"
+    },
+    {
+      "id": "effect_foxfire_burst",
+      "path": "/assets/effects/combat/effect_foxfire_burst.png",
+      "type": "combatEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "狐火爆发"
+    },
+    {
+      "id": "effect_guard_shield",
+      "path": "/assets/effects/combat/effect_guard_shield.png",
+      "type": "combatEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "护阵盾"
+    },
+    {
+      "id": "effect_hit_flash",
+      "path": "/assets/effects/combat/effect_hit_flash.png",
+      "type": "combatEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "命中闪光"
+    },
+    {
+      "id": "effect_inspection_ring",
+      "path": "/assets/effects/combat/effect_inspection_ring.png",
+      "type": "combatEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "勘验环"
+    },
+    {
+      "id": "decree_chain_pattern",
+      "path": "/assets/effects/decrees/decree_chain_pattern.png",
+      "type": "decreeEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "律令锁链纹样"
+    },
+    {
+      "id": "decree_forbid_movement_overlay",
+      "path": "/assets/effects/decrees/decree_forbid_movement_overlay.png",
+      "type": "decreeOverlay",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "禁行令全屏叠加"
+    },
+    {
+      "id": "decree_law_seal",
+      "path": "/assets/effects/decrees/decree_law_seal.png",
+      "type": "decreeEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "律令法印"
+    },
+    {
+      "id": "decree_magic_circle",
+      "path": "/assets/effects/decrees/decree_magic_circle.png",
+      "type": "decreeEffect",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "律令法阵"
+    },
+    {
+      "id": "decree_martial_law_overlay",
+      "path": "/assets/effects/decrees/decree_martial_law_overlay.png",
+      "type": "decreeOverlay",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "戒严令全屏叠加"
+    },
+    {
+      "id": "decree_pursuit_overlay",
+      "path": "/assets/effects/decrees/decree_pursuit_overlay.png",
+      "type": "decreeOverlay",
+      "usedBy": [
+        "effectLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "追捕令全屏叠加"
+    },
+    {
+      "id": "action_attack",
+      "path": "/assets/icons/actions/action_attack.png",
+      "type": "actionIcon",
+      "usedBy": [
+        "actionBar"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "攻击"
+    },
+    {
+      "id": "action_capture",
+      "path": "/assets/icons/actions/action_capture.png",
+      "type": "actionIcon",
+      "usedBy": [
+        "actionBar"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "占领"
+    },
+    {
+      "id": "action_end_turn",
+      "path": "/assets/icons/actions/action_end_turn.png",
+      "type": "actionIcon",
+      "usedBy": [
+        "actionBar"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "结束回合"
+    },
+    {
+      "id": "action_move",
+      "path": "/assets/icons/actions/action_move.png",
+      "type": "actionIcon",
+      "usedBy": [
+        "actionBar"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "移动"
+    },
+    {
+      "id": "action_skill",
+      "path": "/assets/icons/actions/action_skill.png",
+      "type": "actionIcon",
+      "usedBy": [
+        "actionBar"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "技能"
+    },
+    {
+      "id": "faction_qingqiu",
+      "path": "/assets/icons/factions/faction_qingqiu.png",
+      "type": "factionIcon",
+      "usedBy": [
+        "hud",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "青丘阵营标识"
+    },
+    {
+      "id": "faction_tianmen",
+      "path": "/assets/icons/factions/faction_tianmen.png",
+      "type": "factionIcon",
+      "usedBy": [
+        "hud",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "天门阵营标识"
+    },
+    {
+      "id": "skill_decoy",
+      "path": "/assets/icons/skills/skill_decoy.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "假身"
+    },
+    {
+      "id": "skill_decree",
+      "path": "/assets/icons/skills/skill_decree.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "颁令"
+    },
+    {
+      "id": "skill_disturb_string",
+      "path": "/assets/icons/skills/skill_disturb_string.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "扰弦"
+    },
+    {
+      "id": "skill_fox_step",
+      "path": "/assets/icons/skills/skill_fox_step.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "狐步"
+    },
+    {
+      "id": "skill_foxfire_path",
+      "path": "/assets/icons/skills/skill_foxfire_path.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "狐火引路"
+    },
+    {
+      "id": "skill_guard_array",
+      "path": "/assets/icons/skills/skill_guard_array.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "护阵"
+    },
+    {
+      "id": "skill_inspect",
+      "path": "/assets/icons/skills/skill_inspect.png",
+      "type": "skillIcon",
+      "usedBy": [
+        "actionButtons",
+        "unitInfoPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "勘验"
+    },
+    {
+      "id": "terrain_central_objective",
+      "path": "/assets/icons/terrains/terrain_central_objective.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "中央据点"
+    },
+    {
+      "id": "terrain_cover_shadow",
+      "path": "/assets/icons/terrains/terrain_cover_shadow.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "掩影"
+    },
+    {
+      "id": "terrain_dusk_rift",
+      "path": "/assets/icons/terrains/terrain_dusk_rift.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "黄昏裂隙"
+    },
+    {
+      "id": "terrain_edge_objective",
+      "path": "/assets/icons/terrains/terrain_edge_objective.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "边缘据点"
+    },
+    {
+      "id": "terrain_high_ground",
+      "path": "/assets/icons/terrains/terrain_high_ground.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "高台"
+    },
+    {
+      "id": "terrain_obstacle",
+      "path": "/assets/icons/terrains/terrain_obstacle.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "障碍"
+    },
+    {
+      "id": "terrain_plain",
+      "path": "/assets/icons/terrains/terrain_plain.png",
+      "type": "terrainIcon",
+      "usedBy": [
+        "mapEditor",
+        "legend",
+        "debugPanel"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "普通格"
+    },
+    {
+      "id": "tutorial_battlefield_bg",
+      "path": "/assets/maps/tutorial_battlefield_bg.png",
+      "type": "map",
+      "usedBy": [
+        "mapLayer"
+      ],
+      "size": [
+        1440,
+        2560
+      ],
+      "notes": "tutorial_battlefield 竖屏整体地图背景，无文字与单位"
+    },
+    {
+      "id": "global_forbid_movement",
+      "path": "/assets/statuses/global_forbid_movement.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "禁行状态"
+    },
+    {
+      "id": "global_martial_law",
+      "path": "/assets/statuses/global_martial_law.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "戒严状态"
+    },
+    {
+      "id": "global_pursuit",
+      "path": "/assets/statuses/global_pursuit.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "追捕状态"
+    },
+    {
+      "id": "team_foxfire_surge",
+      "path": "/assets/statuses/team_foxfire_surge.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "狐火充盈"
+    },
+    {
+      "id": "tile_foxfire_remnant",
+      "path": "/assets/statuses/tile_foxfire_remnant.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "狐火残留"
+    },
+    {
+      "id": "tile_inspection_zone",
+      "path": "/assets/statuses/tile_inspection_zone.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "勘验区"
+    },
+    {
+      "id": "unit_escape",
+      "path": "/assets/statuses/unit_escape.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "逃逸"
+    },
+    {
+      "id": "unit_fox_mark",
+      "path": "/assets/statuses/unit_fox_mark.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "狐印"
+    },
+    {
+      "id": "unit_guard_array",
+      "path": "/assets/statuses/unit_guard_array.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "护阵"
+    },
+    {
+      "id": "unit_lost",
+      "path": "/assets/statuses/unit_lost.png",
+      "type": "status",
+      "usedBy": [
+        "statusLayer",
+        "hud"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "迷踪"
+    },
+    {
+      "id": "ui_action_bar",
+      "path": "/assets/ui/ui_action_bar.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        1080,
+        220
+      ],
+      "notes": "底部动作栏"
+    },
+    {
+      "id": "ui_button_normal",
+      "path": "/assets/ui/ui_button_normal.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        320,
+        128
+      ],
+      "notes": "普通按钮底图"
+    },
+    {
+      "id": "ui_button_pressed",
+      "path": "/assets/ui/ui_button_pressed.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        320,
+        128
+      ],
+      "notes": "按下按钮底图"
+    },
+    {
+      "id": "ui_corner_deco",
+      "path": "/assets/ui/ui_corner_deco.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels"
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "notes": "角部装饰"
+    },
+    {
+      "id": "ui_drawer_bg",
+      "path": "/assets/ui/ui_drawer_bg.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        720,
+        1280
+      ],
+      "notes": "抽屉背景"
+    },
+    {
+      "id": "ui_frame_bold",
+      "path": "/assets/ui/ui_frame_bold.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "粗边框"
+    },
+    {
+      "id": "ui_frame_thin",
+      "path": "/assets/ui/ui_frame_thin.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "细边框"
+    },
+    {
+      "id": "ui_hud_bar",
+      "path": "/assets/ui/ui_hud_bar.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        1080,
+        160
+      ],
+      "notes": "顶部HUD栏"
+    },
+    {
+      "id": "ui_panel_dark",
+      "path": "/assets/ui/ui_panel_dark.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        512,
+        256
+      ],
+      "notes": "深色半透明面板"
+    },
+    {
+      "id": "ui_panel_gold",
+      "path": "/assets/ui/ui_panel_gold.png",
+      "type": "ui",
+      "usedBy": [
+        "hud",
+        "panels",
+        "actionBar"
+      ],
+      "size": [
+        512,
+        256
+      ],
+      "notes": "深色暗金面板"
+    },
+    {
+      "id": "azhao_portrait",
+      "path": "/assets/units/portraits/azhao_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "阿照头像"
+    },
+    {
+      "id": "baijin_portrait",
+      "path": "/assets/units/portraits/baijin_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "白烬头像"
+    },
+    {
+      "id": "chixiao_portrait",
+      "path": "/assets/units/portraits/chixiao_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "赤霄头像"
+    },
+    {
+      "id": "liuwei_portrait",
+      "path": "/assets/units/portraits/liuwei_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "琉尾头像"
+    },
+    {
+      "id": "qingluo_portrait",
+      "path": "/assets/units/portraits/qingluo_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "青萝头像"
+    },
+    {
+      "id": "suling_portrait",
+      "path": "/assets/units/portraits/suling_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "苏绫头像"
+    },
+    {
+      "id": "xuanzhao_portrait",
+      "path": "/assets/units/portraits/xuanzhao_portrait.png",
+      "type": "portrait",
+      "usedBy": [
+        "unitInfoPanel"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "玄照头像"
+    },
+    {
+      "id": "qingqiu_azhao",
+      "path": "/assets/units/qingqiu_azhao.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "阿照棋子"
+    },
+    {
+      "id": "qingqiu_liuwei",
+      "path": "/assets/units/qingqiu_liuwei.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "琉尾棋子"
+    },
+    {
+      "id": "qingqiu_qingluo",
+      "path": "/assets/units/qingqiu_qingluo.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "青萝棋子"
+    },
+    {
+      "id": "qingqiu_suling",
+      "path": "/assets/units/qingqiu_suling.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "苏绫棋子"
+    },
+    {
+      "id": "tianmen_baijin",
+      "path": "/assets/units/tianmen_baijin.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "白烬棋子"
+    },
+    {
+      "id": "tianmen_chixiao",
+      "path": "/assets/units/tianmen_chixiao.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "赤霄棋子"
+    },
+    {
+      "id": "tianmen_xuanzhao",
+      "path": "/assets/units/tianmen_xuanzhao.png",
+      "type": "unit",
+      "usedBy": [
+        "unitLayer"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "notes": "玄照棋子"
+    }
+  ]
+}

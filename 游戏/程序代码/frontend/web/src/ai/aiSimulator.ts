@@ -1,8 +1,7 @@
-import { getMapConfig, getMapConfigs } from '../data/mapStorage';
+import { getMapConfigs } from '../data/mapStorage';
 import { type MapId, type SquadId } from '../data/maps';
 import { autoDeploySquad } from '../engine/deployment';
 import { createMatch } from '../engine/matchFactory';
-import { validateMap } from '../engine/mapValidator';
 import { beginFirstRound } from '../engine/turnManager';
 import type { MatchState } from '../engine/rules';
 import { saveAIStats } from '../storage/localStatsStorage';
@@ -39,8 +38,6 @@ export type AIBatchProgress = {
 
 export function prepareAIVsAIMatch(mapId: MapId): MatchState {
   let match = createMatch('AI vs AI', mapId, 'qingqiu');
-  const validation = validateMap(getMapConfig(mapId));
-  if (!validation.ok) return match;
   match = { ...match, phase: 'deployment' };
   match = autoDeploySquad(autoDeploySquad(match, 'qingqiu'), 'tianmen');
   return beginFirstRound(match);
