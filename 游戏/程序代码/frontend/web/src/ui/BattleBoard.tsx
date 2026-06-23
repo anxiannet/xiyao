@@ -4,6 +4,7 @@ import { getMapConfig } from '../data/mapStorage';
 import { type DecreeId, type GameAction, type MatchState, type ObjectiveType, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
 import statusFoxfireRemnantUrl from '../assets/split-terrain/status_foxfire_remnant.png';
 import statusInspectionZoneUrl from '../assets/split-terrain/status_inspection_zone.png';
+import type { SelectedActionMode } from './ActionPanel';
 import sulingLeftBackUrl from '../assets/units/suling/suling_left_back.png';
 import sulingLeftFrontUrl from '../assets/units/suling/suling_left_front.png';
 import sulingLeftSideUrl from '../assets/units/suling/suling_left_side.png';
@@ -138,17 +139,23 @@ function getUnitAssetKey(unit: UnitState): AssetKey | null {
 export default function BattleBoard({
   match,
   legalActions,
+  selectedActionMode,
   selectedDeployUnitId,
   locked,
   effect,
+  onAction,
+  onInvalidTarget,
   onSelectUnit,
   onDeployTile,
 }: {
   match: MatchState;
   legalActions: GameAction[];
+  selectedActionMode: SelectedActionMode | null;
   selectedDeployUnitId: string | null;
   locked: boolean;
   effect: DecreeId | null;
+  onAction: (action: GameAction) => void;
+  onInvalidTarget: () => void;
   onSelectUnit: (unitId: string | null) => void;
   onDeployTile: (tileId: string) => void;
 }) {
@@ -162,8 +169,48 @@ export default function BattleBoard({
   const [backgroundVersion, setBackgroundVersion] = React.useState(0);
   const mapConfig = React.useMemo(() => getMapConfig(match.mapId), [match.mapId]);
 
-  const moveTargets = React.useMemo(() => new Set(legalActions.filter((action) => action.type === 'move' || action.skillId === 'fox_step').map((action) => action.targetTileId).filter(Boolean) as string[]), [legalActions]);
-  const attackTargets = React.useMemo(() => new Set(legalActions.filter((action) => action.type === 'attack' || action.skillId === 'disturb_string').map((action) => action.targetUnitId).filter(Boolean) as string[]), [legalActions]);
+  const moveTargets = React.useMemo(() => new Set(
+    selectedActionMode === 'move'
+      ? legalActions.filter((action) => action.type === 'move').map((action) => action.targetTileId).filter(Boolean) as string[]
+      : [],
+  ), [legalActions, selectedActionMode]);
+  const attackTargets = React.useMemo(() => new Set(
+    selectedActionMode === 'attack'
+      ? legalActions.filter((action) => action.type === 'attack').map((action) => action.targetUnitId).filter(Boolean) as string[]
+      : [],
+  ), [legalActions, selectedActionMode]);
+  const skillTileTargets = React.useMemo(() => new Set(
+    selectedActionMode === 'skill'
+      ? legalActions.filter((action) => action.type === 'skill').map((action) => action.targetTileId).filter(Boolean) as string[]
+      : [],
+  ), [legalActions, selectedActionMode]);
+  const skillUnitTargets = React.useMemo(() => new Set(
+    selectedActionMode === 'skill'
+      ? legalActions.filter((action) => action.type === 'skill').map((action) => action.targetUnitId).filter(Boolean) as string[]
+      : [],
+  ), [legalActions, selectedActionMode]);
+
+  const handleBoardTarget = React.useCallback((tile: TileState, unit: UnitState | undefined) => {
+    if (selectedActionMode === 'move') {
+      const action = legalActions.find((item) => item.type === 'move' && item.targetTileId === tile.id);
+      if (action) onAction(action);
+      else onInvalidTarget();
+      return true;
+    }
+    if (selectedActionMode === 'attack') {
+      const action = unit ? legalActions.find((item) => item.type === 'attack' && item.targetUnitId === unit.id) : undefined;
+      if (action) onAction(action);
+      else onInvalidTarget();
+      return true;
+    }
+    if (selectedActionMode === 'skill') {
+      const action = legalActions.find((item) => item.type === 'skill' && ((unit && item.targetUnitId === unit.id) || item.targetTileId === tile.id));
+      if (action) onAction(action);
+      else onInvalidTarget();
+      return true;
+    }
+    return false;
+  }, [legalActions, onAction, onInvalidTarget, selectedActionMode]);
 
   React.useEffect(() => {
     let disposed = false;
@@ -273,6 +320,7 @@ export default function BattleBoard({
       tileGraphic.on('pointertap', () => {
         if (locked) return;
         const unit = getUnitAt(match.units, tile.id);
+        if (handleBoardTarget(tile, unit)) return;
         const selectedDeployUnit = match.units.find((item) => item.id === selectedDeployUnitId);
         const canDeploy = match.phase === 'deployment' && selectedDeployUnit && tile.deploymentOwner === selectedDeployUnit.squad && !unit && tile.terrainLayer !== 'obstacle';
         if (canDeploy) onDeployTile(tile.id);
@@ -307,11 +355,11 @@ export default function BattleBoard({
         layers.status.addChild(owner);
       }
 
-      if (moveTargets.has(tile.id)) {
+      if (moveTargets.has(tile.id) || skillTileTargets.has(tile.id)) {
         const halo = new Graphics();
         drawHex(halo, tile, match, 0.26);
         halo.position.set(x, y);
-        halo.tint = 0x4fa3a5;
+        halo.tint = moveTargets.has(tile.id) ? 0x4fa3a5 : 0xffd77a;
         layers.status.addChild(halo);
       }
 
@@ -334,8 +382,11 @@ export default function BattleBoard({
       group.position.set(point.x, point.y - 20);
       group.eventMode = locked ? 'none' : 'static';
       group.cursor = locked ? 'default' : 'pointer';
-      group.on('pointertap', () => {
-        if (!locked) onSelectUnit(unit.id);
+      group.on('pointertap', (event) => {
+        event.stopPropagation();
+        if (locked) return;
+        if (handleBoardTarget(tile, unit)) return;
+        onSelectUnit(unit.id);
       });
       const unitAssetKey = getUnitAssetKey(unit);
       const unitTexture = unitAssetKey ? assetTexturesRef.current[unitAssetKey] : null;
@@ -343,7 +394,7 @@ export default function BattleBoard({
         const halo = new Graphics();
         halo.ellipse(0, 16, 21, 9);
         halo.fill({ color: unit.squad === 'qingqiu' ? 0x4fa3a5 : 0xd8d2bf, alpha: match.selectedUnitId === unit.id ? 0.42 : 0.22 });
-        halo.stroke({ color: attackTargets.has(unit.id) ? 0xb85a3c : squadColors[unit.squad].line, width: match.selectedUnitId === unit.id ? 3 : 1, alpha: 0.9 });
+        halo.stroke({ color: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 0xb85a3c : squadColors[unit.squad].line, width: match.selectedUnitId === unit.id ? 3 : 1, alpha: 0.9 });
         group.addChild(halo);
         const sprite = new Sprite(unitTexture);
         sprite.anchor.set(0.5, 0.82);
@@ -356,7 +407,7 @@ export default function BattleBoard({
         const squad = squadColors[unit.squad];
         disc.circle(0, 0, unit.summon ? 12 : 16);
         disc.fill({ color: squad.fill, alpha: unit.summon ? 0.72 : 0.96 });
-        disc.stroke({ color: attackTargets.has(unit.id) ? 0xb85a3c : squad.line, width: match.selectedUnitId === unit.id ? 4 : 2 });
+        disc.stroke({ color: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 0xb85a3c : squad.line, width: match.selectedUnitId === unit.id ? 4 : 2 });
         group.addChild(disc);
         const initial = makeText(unit.name.slice(0, 1), 17, unit.squad === 'tianmen' ? 0x232323 : 0x062226);
         group.addChild(initial);
@@ -366,7 +417,7 @@ export default function BattleBoard({
       group.addChild(hp);
       layers.unit.addChild(group);
     }
-  }, [attackTargets, backgroundVersion, legalActions, locked, mapConfig.grid.hexHeight, mapConfig.grid.hexWidth, mapConfig.backgroundImage, match, moveTargets, onDeployTile, onSelectUnit, ready, selectedDeployUnitId, viewMode]);
+  }, [attackTargets, backgroundVersion, handleBoardTarget, locked, mapConfig.grid.hexHeight, mapConfig.grid.hexWidth, mapConfig.backgroundImage, match, moveTargets, onDeployTile, onSelectUnit, ready, selectedDeployUnitId, skillTileTargets, skillUnitTargets, viewMode]);
 
   React.useEffect(() => {
     const app = appRef.current;

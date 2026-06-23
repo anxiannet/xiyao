@@ -1,4 +1,44 @@
-export const mapConfigs = {
+export type MapId = 'tutorial_battlefield';
+export type SquadId = 'qingqiu' | 'tianmen';
+export type TerrainId = 'plain' | 'central_objective' | 'edge_objective' | 'high_ground' | 'cover_shadow' | 'dusk_rift' | 'obstacle';
+export type ObjectiveType = 'central' | 'edge';
+
+export type MapGridConfig = {
+  rows: number;
+  cols: number;
+  hexWidth: number;
+  hexHeight: number;
+  offsetX: number;
+  offsetY: number;
+  gapX: number;
+  gapY: number;
+  scale?: number;
+  viewMode?: string;
+};
+
+export type MapTileConfig = {
+  id: string;
+  q: number;
+  r: number;
+  row: number;
+  col: number;
+  terrain: TerrainId;
+  deploymentOwner: SquadId | null;
+  objectiveType: ObjectiveType | null;
+  objectiveOwner?: SquadId | 'neutral' | null;
+  isBackground?: boolean;
+};
+
+export type MapConfig = {
+  id: MapId;
+  name: string;
+  typeNote?: string;
+  backgroundImage?: string;
+  grid: MapGridConfig;
+  tiles: MapTileConfig[];
+};
+
+export const mapConfigs: Record<MapId, MapConfig> = {
   "tutorial_battlefield": {
     "id": "tutorial_battlefield",
     "name": "青丘谷地图",

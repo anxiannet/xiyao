@@ -6,11 +6,11 @@ import { resolveAction } from '../engine/actionResolver';
 import { createMatch } from '../engine/matchFactory';
 import { validateMap } from '../engine/mapValidator';
 import { beginFirstRound } from '../engine/turnManager';
-import type { DecreeId, GameAction, MatchState } from '../engine/rules';
+import { addLog, type DecreeId, type GameAction, type MatchState } from '../engine/rules';
 import { getMapConfig } from '../data/mapStorage';
 import { saveCurrentMatch } from '../storage/localMatchStorage';
 import { loadAIStats } from '../storage/localStatsStorage';
-import ActionPanel from './ActionPanel';
+import ActionPanel, { type SelectedActionMode } from './ActionPanel';
 import AIDebugPanel from './AIDebugPanel';
 import BattleBoard from './BattleBoard';
 import BattleLog from './BattleLog';
@@ -31,6 +31,7 @@ function detectDecreeEffect(logMessage: string): DecreeId | null {
 
 export default function App() {
   const [selectedDeployUnitId, setSelectedDeployUnitId] = React.useState<string | null>(null);
+  const [selectedActionMode, setSelectedActionMode] = React.useState<SelectedActionMode | null>(null);
   const [drawer, setDrawer] = React.useState<'log' | 'ai' | null>(null);
   const [stats] = React.useState<unknown>(() => loadAIStats());
   const [effect, setEffect] = React.useState<DecreeId | null>(null);
@@ -84,11 +85,17 @@ export default function App() {
   }
 
   function selectUnit(unitId: string | null) {
+    setSelectedActionMode(null);
     setMatch((current) => ({ ...current, selectedUnitId: unitId }));
   }
 
   function executeAction(action: GameAction) {
+    setSelectedActionMode(null);
     setMatch((current) => runAIUntilHumanOrEnd(resolveAction(current, action)));
+  }
+
+  function rejectTargetSelection() {
+    setMatch((current) => addLog(current, 'action_rejected', '请选择合法目标'));
   }
 
   function aiStep() {
@@ -107,8 +114,11 @@ export default function App() {
           locked={false}
           match={match}
           legalActions={legalActions}
+          selectedActionMode={selectedActionMode}
           selectedDeployUnitId={selectedDeployUnitId}
           effect={effect}
+          onAction={executeAction}
+          onInvalidTarget={rejectTargetSelection}
           onSelectUnit={selectUnit}
           onDeployTile={deployToTile}
         />
@@ -138,7 +148,7 @@ export default function App() {
         </section>
       )}
       {match.phase !== 'map_preview' && match.phase !== 'deployment' && (
-        <ActionPanel actions={legalActions} locked={false} onAction={executeAction} onAIStep={aiStep} onAIFull={aiFull} />
+        <ActionPanel actions={legalActions} locked={false} onAction={executeAction} onSelectActionMode={setSelectedActionMode} onAIStep={aiStep} onAIFull={aiFull} />
       )}
       <UnitInfoPanel match={match} />
       <div className="floatingTools">
