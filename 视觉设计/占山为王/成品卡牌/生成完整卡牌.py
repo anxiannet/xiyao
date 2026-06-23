@@ -21,6 +21,8 @@ EXPORT_DIR = ROOT / "导出"
 
 BLEED_W, BLEED_H = 815, 1110
 TRIM_W, TRIM_H = 744, 1039
+LAND_BLEED_W, LAND_BLEED_H = BLEED_H, BLEED_W
+LAND_TRIM_W, LAND_TRIM_H = TRIM_H, TRIM_W
 BLEED = round((BLEED_W - TRIM_W) / 2)
 SAFE = BLEED + 34
 DPI = (300, 300)
@@ -179,28 +181,37 @@ def draw_star(draw: ImageDraw.ImageDraw, cx: int, cy: int, size: int, fill: tupl
     draw.polygon(star_points(cx - size * 0.16, cy - size * 0.16, size * 0.32, size * 0.14), fill=(255, 244, 178))
 
 
-def draw_pattern_border(draw: ImageDraw.ImageDraw, palette: dict, slug: str | None = None) -> None:
+def draw_pattern_border(
+    draw: ImageDraw.ImageDraw,
+    palette: dict,
+    slug: str | None = None,
+    size: tuple[int, int] = (BLEED_W, BLEED_H),
+    bleed: int = BLEED,
+    safe: int = SAFE,
+) -> None:
+    canvas_w, canvas_h = size
     main = palette["main"]
     light = palette["light"]
     dark = palette["dark"]
 
-    draw.rounded_rectangle((8, 8, BLEED_W - 8, BLEED_H - 8), radius=44, fill=PAPER, outline=dark, width=8)
-    draw.rounded_rectangle((BLEED - 12, BLEED - 12, BLEED_W - BLEED + 12, BLEED_H - BLEED + 12), radius=34, outline=main, width=10)
-    draw.rounded_rectangle((SAFE - 12, SAFE - 12, BLEED_W - SAFE + 12, BLEED_H - SAFE + 12), radius=28, outline=light, width=3)
+    draw.rounded_rectangle((8, 8, canvas_w - 8, canvas_h - 8), radius=44, fill=PAPER, outline=dark, width=8)
+    draw.rounded_rectangle((bleed - 12, bleed - 12, canvas_w - bleed + 12, canvas_h - bleed + 12), radius=34, outline=main, width=12)
+    draw.rounded_rectangle((safe - 12, safe - 12, canvas_w - safe + 12, canvas_h - safe + 12), radius=28, outline=light, width=3)
+    draw.rounded_rectangle((bleed + 8, bleed + 8, canvas_w - bleed - 8, canvas_h - bleed - 8), radius=30, outline=dark, width=4)
 
     step = 46
-    for x in range(42, BLEED_W - 42, step):
+    for x in range(42, canvas_w - 42, step):
         draw.arc((x - 18, 20, x + 18, 56), 0, 300, fill=main, width=3)
-        draw.arc((x - 18, BLEED_H - 56, x + 18, BLEED_H - 20), 180, 480, fill=main, width=3)
-    for y in range(70, BLEED_H - 70, step):
+        draw.arc((x - 18, canvas_h - 56, x + 18, canvas_h - 20), 180, 480, fill=main, width=3)
+    for y in range(70, canvas_h - 70, step):
         draw.arc((20, y - 18, 56, y + 18), 90, 390, fill=main, width=3)
-        draw.arc((BLEED_W - 56, y - 18, BLEED_W - 20, y + 18), 270, 570, fill=main, width=3)
+        draw.arc((canvas_w - 56, y - 18, canvas_w - 20, y + 18), 270, 570, fill=main, width=3)
 
     for x, y, sx, sy in [
         (54, 54, 1, 1),
-        (BLEED_W - 54, 54, -1, 1),
-        (54, BLEED_H - 54, 1, -1),
-        (BLEED_W - 54, BLEED_H - 54, -1, -1),
+        (canvas_w - 54, 54, -1, 1),
+        (54, canvas_h - 54, 1, -1),
+        (canvas_w - 54, canvas_h - 54, -1, -1),
     ]:
         draw.ellipse((x - 26, y - 26, x + 26, y + 26), fill=dark, outline=light, width=3)
         draw.polygon([(x, y - 20 * sy), (x + 18 * sx, y), (x, y + 20 * sy), (x - 18 * sx, y)], fill=main)
@@ -208,8 +219,8 @@ def draw_pattern_border(draw: ImageDraw.ImageDraw, palette: dict, slug: str | No
 
     if slug in LAND_COLORS:
         land_main, land_dark = LAND_COLORS[slug]
-        draw.rounded_rectangle((BLEED - 18, BLEED - 18, BLEED_W - BLEED + 18, BLEED_H - BLEED + 18), radius=34, outline=land_dark, width=7)
-        draw.rounded_rectangle((BLEED - 4, BLEED - 4, BLEED_W - BLEED + 4, BLEED_H - BLEED + 4), radius=30, outline=land_main, width=5)
+        draw.rounded_rectangle((bleed - 18, bleed - 18, canvas_w - bleed + 18, canvas_h - bleed + 18), radius=34, outline=land_dark, width=8)
+        draw.rounded_rectangle((bleed - 3, bleed - 3, canvas_w - bleed + 3, canvas_h - bleed + 3), radius=30, outline=land_main, width=6)
 
 
 def gradient_background(size: tuple[int, int], top: tuple[int, int, int], bottom: tuple[int, int, int]) -> Image.Image:
@@ -261,86 +272,234 @@ def draw_badge(draw: ImageDraw.ImageDraw, text: str, box: tuple[int, int, int, i
 
 
 def draw_stars(draw: ImageDraw.ImageDraw, stars: int, palette: dict) -> None:
-    size = 26 if stars < 3 else 29
+    size = 29 if stars < 3 else 32
     gap = size * 2 + 10
-    total = stars * size * 2 + (stars - 1) * 10
-    start = (BLEED_W - total) / 2 + size
-    cy = 70
+    start = SAFE + size + 6
+    cy = SAFE + 20
+    plate = (SAFE - 10, SAFE - 22, SAFE + stars * gap + 50, SAFE + 62)
+    draw.rounded_rectangle(plate, radius=28, fill=palette["dark"], outline=palette["light"], width=4)
     for i in range(stars):
         draw_star(draw, round(start + i * gap), cy, size, palette["light"], palette["dark"])
 
 
-def draw_title(draw: ImageDraw.ImageDraw, name: str, palette: dict) -> None:
-    panel = (90, 96, BLEED_W - 90, 158)
-    draw.rounded_rectangle(panel, radius=20, fill=palette["panel"], outline=palette["main"], width=4)
-    fnt = fit_font(draw, name, panel[2] - panel[0] - 34, 44, 26)
-    draw_centered_text(draw, name, panel, fnt, INK)
+def draw_name_plate(draw: ImageDraw.ImageDraw, name: str, panel: tuple[int, int, int, int], palette: dict) -> None:
+    x1, y1, x2, y2 = panel
+    shadow = (x1 + 8, y1 + 8, x2 + 8, y2 + 8)
+    draw.rounded_rectangle(shadow, radius=24, fill=(42, 28, 18))
+    draw.rounded_rectangle(panel, radius=24, fill=palette["dark"], outline=palette["light"], width=5)
+    draw.rounded_rectangle((x1 + 10, y1 + 10, x2 - 10, y2 - 10), radius=18, outline=palette["main"], width=2)
+    fnt = fit_font(draw, name, x2 - x1 - 42, 54, 32)
+    draw_centered_text(draw, name, panel, fnt, (255, 221, 128), stroke_fill=(64, 38, 20), stroke_width=2)
 
 
-def draw_skill(draw: ImageDraw.ImageDraw, text: str, palette: dict, card_type: str) -> None:
-    panel = (80, 930, BLEED_W - 80, 1040)
-    draw.rounded_rectangle(panel, radius=20, fill=(250, 241, 216), outline=palette["main"], width=4)
-    if card_type == "land":
-        draw_badge(draw, "地盘", (BLEED_W // 2 - 52, 957, BLEED_W // 2 + 52, 1013), palette)
-        return
+def draw_skill_scroll(draw: ImageDraw.ImageDraw, text: str, palette: dict, panel: tuple[int, int, int, int]) -> None:
+    x1, y1, x2, y2 = panel
+    draw.rounded_rectangle((x1 + 6, y1 + 8, x2 + 6, y2 + 8), radius=28, fill=(49, 34, 22))
+    draw.rounded_rectangle(panel, radius=28, fill=(248, 232, 191), outline=palette["dark"], width=5)
+    for x in (x1 + 26, x2 - 26):
+        draw.ellipse((x - 20, y1 - 6, x + 20, y2 + 6), fill=palette["main"], outline=palette["dark"], width=4)
+        draw.line((x, y1 + 10, x, y2 - 10), fill=palette["light"], width=3)
+    draw.rounded_rectangle((x1 + 50, y1 + 13, x2 - 50, y2 - 13), radius=18, fill=(255, 244, 212), outline=palette["main"], width=2)
     display = text or "无技能"
-    fnt = fit_font(draw, display, panel[2] - panel[0] - 36, 31, 20)
-    draw_centered_text(draw, display, panel, fnt, INK)
+    fnt = fit_font(draw, display, x2 - x1 - 126, 30, 18)
+    draw_centered_text(draw, display, (x1 + 56, y1 + 8, x2 - 56, y2 - 8), fnt, INK)
 
 
-def draw_front(card: dict) -> tuple[Image.Image, bool]:
-    palette = TYPE_COLORS[card["type"]]
-    img = gradient_background((BLEED_W, BLEED_H), (250, 242, 221), (224, 204, 166)).convert("RGB")
-    draw = ImageDraw.Draw(img)
-    draw_pattern_border(draw, palette, card["slug"] if card["type"] == "land" else None)
+def draw_magic_clouds(draw: ImageDraw.ImageDraw, size: tuple[int, int], palette: dict) -> None:
+    w, h = size
+    for i in range(11):
+        x = 62 + i * 73
+        y = 168 + (i % 4) * 95
+        col = palette["main"] if i % 2 else palette["light"]
+        draw.arc((x - 72, y - 28, x + 72, y + 54), 185, 352, fill=col, width=5)
+        draw.arc((w - x - 72, h - y - 60, w - x + 72, h - y + 22), 8, 178, fill=col, width=4)
+    for r, alpha_col in [(360, (255, 205, 95)), (250, (126, 74, 150)), (160, (255, 232, 140))]:
+        draw.ellipse((w // 2 - r, 160 - r // 2, w // 2 + r, 160 + r // 2), outline=alpha_col, width=2)
 
-    if card["stars"]:
-        draw_stars(draw, int(card["stars"]), palette)
-    else:
-        draw_badge(draw, card["display_type"], (BLEED_W // 2 - 64, 42, BLEED_W // 2 + 64, 88), palette)
 
-    draw_title(draw, card["name"], palette)
-
-    art_box = (82, 178, BLEED_W - 82, 902)
-    art, missing = load_art(card, art_box)
-    shadow = Image.new("RGBA", (art_box[2] - art_box[0], art_box[3] - art_box[1]), (0, 0, 0, 0))
+def paste_art_with_frame(
+    img: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    art: Image.Image,
+    art_box: tuple[int, int, int, int],
+    palette: dict,
+    radius: int,
+) -> None:
+    x1, y1, x2, y2 = art_box
+    shadow = Image.new("RGBA", (x2 - x1, y2 - y1), (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow)
-    shadow_draw.rounded_rectangle((0, 0, shadow.width, shadow.height), radius=30, fill=(0, 0, 0, 130))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(8))
-    img.paste(shadow.convert("RGB"), (art_box[0] + 6, art_box[1] + 8), shadow)
-    img.paste(art, (art_box[0], art_box[1]), mask_rounded(art.size, 30))
-    draw.rounded_rectangle(art_box, radius=30, outline=palette["dark"], width=6)
-    draw.rounded_rectangle((art_box[0] + 8, art_box[1] + 8, art_box[2] - 8, art_box[3] - 8), radius=24, outline=palette["light"], width=2)
+    shadow_draw.rounded_rectangle((0, 0, shadow.width, shadow.height), radius=radius, fill=(0, 0, 0, 140))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(10))
+    img.paste(shadow.convert("RGB"), (x1 + 8, y1 + 10), shadow)
+    img.paste(art, (x1, y1), mask_rounded(art.size, radius))
+    draw.rounded_rectangle(art_box, radius=radius, outline=palette["dark"], width=7)
+    draw.rounded_rectangle((x1 + 9, y1 + 9, x2 - 9, y2 - 9), radius=max(4, radius - 8), outline=palette["light"], width=3)
 
-    draw_skill(draw, card.get("skill_text", ""), palette, card["type"])
+
+def draw_monster_front(card: dict) -> tuple[Image.Image, bool]:
+    palette = TYPE_COLORS[card["type"]]
+    img = gradient_background((BLEED_W, BLEED_H), (71, 54, 52), (23, 27, 35)).convert("RGB")
+    draw = ImageDraw.Draw(img)
+    draw_magic_clouds(draw, (BLEED_W, BLEED_H), palette)
+    draw_pattern_border(draw, palette)
+    draw_stars(draw, int(card["stars"]), palette)
+
+    art_box = (76, 118, BLEED_W - 76, 854)
+    art, missing = load_art(card, art_box)
+    paste_art_with_frame(img, draw, art, art_box, palette, 30)
+    draw_name_plate(draw, card["name"], (90, 782, BLEED_W - 90, 858), palette)
+    draw_skill_scroll(draw, card.get("skill_text", ""), palette, (78, 900, BLEED_W - 78, 1038))
     return img, missing
 
 
-def draw_card_back() -> Image.Image:
-    img = gradient_background((BLEED_W, BLEED_H), (250, 242, 222), (225, 207, 172)).convert("RGB")
+def draw_artifact_front(card: dict) -> tuple[Image.Image, bool]:
+    palette = TYPE_COLORS["artifact"]
+    img = gradient_background((BLEED_W, BLEED_H), (60, 43, 72), (28, 24, 38)).convert("RGB")
     draw = ImageDraw.Draw(img)
-    palette = {"main": GOLD, "light": (232, 198, 116), "dark": DARK_GOLD, "panel": (242, 224, 185)}
+    draw_magic_clouds(draw, (BLEED_W, BLEED_H), palette)
     draw_pattern_border(draw, palette)
+    draw_badge(draw, "法宝", (BLEED_W // 2 - 78, SAFE - 22, BLEED_W // 2 + 78, SAFE + 42), palette)
 
-    center = (BLEED_W // 2, BLEED_H // 2)
-    for r, col, width in [(260, (210, 170, 92), 5), (214, DARK_GOLD, 3), (160, (220, 190, 122), 3)]:
+    center = (BLEED_W // 2, 488)
+    for r, col, width in [(322, palette["main"], 5), (250, palette["light"], 4), (176, (255, 238, 148), 3)]:
+        draw.ellipse((center[0] - r, center[1] - r, center[0] + r, center[1] + r), outline=col, width=width)
+    for i in range(12):
+        angle = i * math.pi / 6
+        x = center[0] + math.cos(angle) * 285
+        y = center[1] + math.sin(angle) * 285
+        draw.line((center[0], center[1], x, y), fill=palette["dark"], width=2)
+
+    art_box = (84, 128, BLEED_W - 84, 820)
+    art, missing = load_art(card, art_box)
+    paste_art_with_frame(img, draw, art, art_box, palette, 148)
+    draw_name_plate(draw, card["name"], (112, 792, BLEED_W - 112, 866), palette)
+    draw_skill_scroll(draw, card.get("skill_text", ""), palette, (78, 912, BLEED_W - 78, 1038))
+    return img, missing
+
+
+def land_faction(slug: str) -> str:
+    if slug in {"baiguling", "maigupo", "luanzanggang"}:
+        return "白骨"
+    if slug in {"huoyanshan", "cuiyunshan", "bajiaodong"}:
+        return "火云"
+    if slug in {"shituoling", "shituodong", "shituoguo"}:
+        return "狮驼"
+    return "盘丝"
+
+
+def draw_land_emblem(draw: ImageDraw.ImageDraw, center: tuple[int, int], slug: str, palette: dict) -> None:
+    cx, cy = center
+    faction = land_faction(slug)
+    draw.ellipse((cx - 42, cy - 42, cx + 42, cy + 42), fill=palette["dark"], outline=palette["light"], width=5)
+    if faction == "白骨":
+        draw.line((cx - 25, cy - 16, cx + 25, cy + 16), fill=CREAM, width=9)
+        draw.line((cx - 25, cy + 16, cx + 25, cy - 16), fill=CREAM, width=9)
+    elif faction == "火云":
+        draw.polygon([(cx, cy - 30), (cx + 20, cy + 20), (cx, cy + 10), (cx - 20, cy + 20)], fill=(238, 91, 38))
+    elif faction == "狮驼":
+        draw.polygon(star_points(cx, cy, 30, 15), fill=(238, 190, 82))
+    else:
+        for i in range(8):
+            angle = i * math.pi / 4
+            draw.line((cx, cy, cx + math.cos(angle) * 30, cy + math.sin(angle) * 30), fill=(225, 184, 240), width=3)
+        draw.ellipse((cx - 12, cy - 12, cx + 12, cy + 12), fill=(145, 69, 160))
+
+
+def draw_land_front(card: dict) -> tuple[Image.Image, bool]:
+    palette = TYPE_COLORS["land"].copy()
+    if card["slug"] in LAND_COLORS:
+        land_main, land_dark = LAND_COLORS[card["slug"]]
+        palette.update({"main": land_main, "dark": land_dark, "light": tuple(min(255, c + 48) for c in land_main)})
+    img = gradient_background((LAND_BLEED_W, LAND_BLEED_H), (60, 48, 36), (24, 26, 27)).convert("RGB")
+    draw = ImageDraw.Draw(img)
+    draw_pattern_border(draw, palette, card["slug"], size=(LAND_BLEED_W, LAND_BLEED_H))
+
+    title_panel = (112, 44, LAND_BLEED_W - 112, 128)
+    draw.rounded_rectangle((title_panel[0] + 8, title_panel[1] + 8, title_panel[2] + 8, title_panel[3] + 8), radius=28, fill=(31, 24, 18))
+    draw.rounded_rectangle(title_panel, radius=28, fill=palette["dark"], outline=palette["light"], width=5)
+    draw_land_emblem(draw, (title_panel[0] + 60, 86), card["slug"], palette)
+    title_font = fit_font(draw, card["name"], title_panel[2] - title_panel[0] - 170, 56, 34)
+    draw_centered_text(draw, card["name"], (title_panel[0] + 118, title_panel[1], title_panel[2] - 42, title_panel[3]), title_font, (255, 225, 132), stroke_fill=(62, 40, 22), stroke_width=2)
+
+    art_box = (62, 150, LAND_BLEED_W - 62, LAND_BLEED_H - 88)
+    art, missing = load_art(card, art_box)
+    paste_art_with_frame(img, draw, art, art_box, palette, 28)
+
+    bottom = (86, LAND_BLEED_H - 78, LAND_BLEED_W - 86, LAND_BLEED_H - 34)
+    draw.rounded_rectangle(bottom, radius=20, fill=palette["dark"], outline=palette["light"], width=3)
+    for x in range(bottom[0] + 38, bottom[2] - 38, 76):
+        draw.arc((x - 34, bottom[1] + 4, x + 34, bottom[3] + 20), 180, 360, fill=palette["main"], width=3)
+    draw_badge(draw, land_faction(card["slug"]), (LAND_BLEED_W - 184, 56, LAND_BLEED_W - 92, 116), palette)
+    return img, missing
+
+
+def draw_front(card: dict) -> tuple[Image.Image, bool]:
+    if card["type"] == "land":
+        return draw_land_front(card)
+    if card["type"] == "artifact":
+        return draw_artifact_front(card)
+    return draw_monster_front(card)
+    return img, missing
+
+
+def draw_card_back(kind: str) -> Image.Image:
+    if kind == "land":
+        size = (LAND_BLEED_W, LAND_BLEED_H)
+        palette = {"main": (185, 145, 74), "light": (238, 204, 126), "dark": (74, 59, 35), "panel": (242, 224, 185)}
+        img = gradient_background(size, (64, 50, 35), (26, 31, 31)).convert("RGB")
+    elif kind == "artifact":
+        size = (BLEED_W, BLEED_H)
+        palette = {"main": (118, 62, 143), "light": (223, 174, 247), "dark": (66, 34, 82), "panel": (237, 219, 239)}
+        img = gradient_background(size, (58, 38, 72), (26, 22, 38)).convert("RGB")
+    else:
+        size = (BLEED_W, BLEED_H)
+        palette = {"main": GOLD, "light": (232, 198, 116), "dark": DARK_GOLD, "panel": (242, 224, 185)}
+        img = gradient_background(size, (84, 59, 47), (25, 28, 36)).convert("RGB")
+    draw = ImageDraw.Draw(img)
+    draw_pattern_border(draw, palette, size=size)
+
+    w, h = size
+    center = (w // 2, h // 2)
+    base_r = min(w, h) // 3
+    for r, col, width in [(base_r, palette["light"], 5), (base_r - 46, palette["dark"], 3), (base_r - 100, palette["main"], 3)]:
         draw.ellipse((center[0] - r, center[1] - r, center[0] + r, center[1] + r), outline=col, width=width)
 
-    # Ancient scroll and mountain-cloud motif.
-    draw.rounded_rectangle((190, 350, BLEED_W - 190, 760), radius=36, fill=(242, 226, 188), outline=DARK_GOLD, width=6)
-    draw.arc((240, 410, 575, 780), 200, 340, fill=GOLD, width=14)
-    draw.polygon([(250, 650), (330, 520), (405, 650)], fill=(180, 142, 76))
-    draw.polygon([(360, 650), (460, 470), (570, 650)], fill=(154, 116, 61))
-    draw.arc((210, 455, 610, 765), 200, 330, fill=(105, 74, 38), width=4)
-    for x in (214, 600):
-        draw.ellipse((x - 28, 338, x + 28, 394), fill=(230, 205, 148), outline=DARK_GOLD, width=4)
-        draw.ellipse((x - 28, 716, x + 28, 772), fill=(230, 205, 148), outline=DARK_GOLD, width=4)
+    if kind == "land":
+        draw.rounded_rectangle((170, 252, w - 170, h - 182), radius=36, fill=(225, 205, 150), outline=palette["dark"], width=6)
+        draw.polygon([(232, 545), (350, 345), (456, 545)], fill=(174, 138, 76))
+        draw.polygon([(420, 545), (610, 285), (806, 545)], fill=(128, 101, 58))
+        draw.arc((235, 320, 850, 645), 190, 350, fill=palette["main"], width=16)
+        title_box = (250, 564, w - 250, 650)
+        type_text = "地盘牌"
+    elif kind == "artifact":
+        for i in range(10):
+            angle = i * math.pi / 5
+            draw.line((center[0], center[1], center[0] + math.cos(angle) * (base_r + 68), center[1] + math.sin(angle) * (base_r + 68)), fill=palette["main"], width=4)
+        draw.rounded_rectangle((210, 364, w - 210, 746), radius=44, fill=(230, 210, 236), outline=palette["dark"], width=7)
+        draw.ellipse((center[0] - 128, center[1] - 128, center[0] + 128, center[1] + 128), fill=(98, 49, 128), outline=palette["light"], width=8)
+        draw.polygon(star_points(center[0], center[1], 92, 40), fill=(238, 196, 106))
+        title_box = (140, 766, w - 140, 850)
+        type_text = "法宝牌"
+    else:
+        draw.rounded_rectangle((190, 350, w - 190, 760), radius=36, fill=(242, 226, 188), outline=palette["dark"], width=6)
+        draw.arc((240, 410, 575, 780), 200, 340, fill=palette["main"], width=14)
+        draw.polygon([(250, 650), (330, 520), (405, 650)], fill=(180, 142, 76))
+        draw.polygon([(360, 650), (460, 470), (570, 650)], fill=(154, 116, 61))
+        draw.arc((210, 455, 610, 765), 200, 330, fill=palette["dark"], width=4)
+        title_box = (120, 476, w - 120, 574)
+        type_text = "妖怪牌"
 
     title = "占山为王"
     title_font = font(72)
-    draw_centered_text(draw, title, (120, 476, BLEED_W - 120, 574), title_font, DARK_GOLD, stroke_fill=(255, 248, 224), stroke_width=2)
+    draw_centered_text(draw, title, title_box, title_font, palette["dark"], stroke_fill=(255, 248, 224), stroke_width=2)
     mark_font = font(34)
-    draw_centered_text(draw, "夕妖", (120, 586, BLEED_W - 120, 640), mark_font, (126, 84, 42))
+    if kind == "land":
+        mark_box = (250, 662, w - 250, 712)
+    elif kind == "artifact":
+        mark_box = (140, 854, w - 140, 906)
+    else:
+        mark_box = (120, 586, w - 120, 640)
+    draw_centered_text(draw, f"夕妖 · {type_text}", mark_box, mark_font, palette["main"], stroke_fill=(38, 28, 22), stroke_width=1)
     return img
 
 
@@ -368,6 +527,38 @@ def make_contact_sheet(files: Iterable[Path], out: Path) -> None:
     save_png(sheet, out)
 
 
+def make_preview_all_cards(cards: list[dict], out: Path) -> None:
+    picks = [
+        ("妖怪卡", "xiyao_zhanshanweiwang_card_front_niumowang.png"),
+        ("妖怪卡", "xiyao_zhanshanweiwang_card_front_xiaozuanfeng.png"),
+        ("法宝卡", "xiyao_zhanshanweiwang_card_front_zijin_honghulu.png"),
+        ("地盘卡", "xiyao_zhanshanweiwang_card_front_huoyanshan.png"),
+        ("地盘卡", "xiyao_zhanshanweiwang_card_front_baiguling.png"),
+        ("妖怪牌背", "xiyao_zhanshanweiwang_monster_back.png"),
+        ("法宝牌背", "xiyao_zhanshanweiwang_artifact_back.png"),
+        ("地盘牌背", "xiyao_zhanshanweiwang_land_back.png"),
+    ]
+    tile_w, tile_h = 270, 380
+    label_h = 42
+    cols = 4
+    rows = 2
+    sheet = Image.new("RGB", (cols * tile_w, rows * (tile_h + label_h)), (246, 241, 228))
+    d = ImageDraw.Draw(sheet)
+    label_font = font(24)
+    for idx, (label, file_name) in enumerate(picks):
+        path = (BACK_DIR if "back" in file_name else FRONT_DIR) / file_name
+        card = Image.open(path).convert("RGB")
+        card.thumbnail((tile_w - 26, tile_h - 18), Image.Resampling.LANCZOS)
+        base_x = (idx % cols) * tile_w
+        base_y = (idx // cols) * (tile_h + label_h)
+        x = base_x + (tile_w - card.width) // 2
+        y = base_y + (tile_h - card.height) // 2
+        d.rounded_rectangle((base_x + 10, base_y + 8, base_x + tile_w - 10, base_y + tile_h - 8), radius=10, fill=(232, 224, 205), outline=(146, 116, 64), width=2)
+        sheet.paste(card, (x, y))
+        draw_centered_text(d, label, (base_x, base_y + tile_h, base_x + tile_w, base_y + tile_h + label_h), label_font, (58, 42, 28))
+    save_png(sheet, out)
+
+
 def main() -> None:
     ensure_dirs()
     cards = json.loads(DATA_PATH.read_text(encoding="utf-8"))
@@ -382,8 +573,14 @@ def main() -> None:
         if is_missing:
             missing.append(card["name"])
 
-    back = draw_card_back()
-    save_png(back, BACK_DIR / "xiyao_zhanshanweiwang_card_back.png")
+    backs = {
+        "monster": BACK_DIR / "xiyao_zhanshanweiwang_monster_back.png",
+        "artifact": BACK_DIR / "xiyao_zhanshanweiwang_artifact_back.png",
+        "land": BACK_DIR / "xiyao_zhanshanweiwang_land_back.png",
+    }
+    save_png(draw_card_back("monster"), backs["monster"])
+    save_png(draw_card_back("artifact"), backs["artifact"])
+    save_png(draw_card_back("land"), backs["land"])
 
     preview_card = {
         "name": "模板预览",
@@ -398,11 +595,17 @@ def main() -> None:
     save_png(preview, TEMPLATE_DIR / "card_front_template_preview.png")
 
     make_contact_sheet(generated, EXPORT_DIR / "all_cards_contact_sheet.png")
+    make_preview_all_cards(cards, EXPORT_DIR / "preview_all_cards.png")
 
     report = {
         "front_cards": len(generated),
-        "card_back": str(BACK_DIR / "xiyao_zhanshanweiwang_card_back.png"),
+        "monster_back": str(backs["monster"]),
+        "artifact_back": str(backs["artifact"]),
+        "land_back": str(backs["land"]),
         "template_preview": str(TEMPLATE_DIR / "card_front_template_preview.png"),
+        "preview_all_cards": str(EXPORT_DIR / "preview_all_cards.png"),
+        "monster_artifact_size_px": [BLEED_W, BLEED_H],
+        "land_size_px": [LAND_BLEED_W, LAND_BLEED_H],
         "missing_art": missing,
     }
     (EXPORT_DIR / "generation_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

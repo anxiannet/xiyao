@@ -1,6 +1,17 @@
 {
   "front_cards": 43,
-  "card_back": "/Users/weijie/Documents/Xiyao/视觉设计/占山为王/成品卡牌/背面/xiyao_zhanshanweiwang_card_back.png",
+  "monster_back": "/Users/weijie/Documents/Xiyao/视觉设计/占山为王/成品卡牌/背面/xiyao_zhanshanweiwang_monster_back.png",
+  "artifact_back": "/Users/weijie/Documents/Xiyao/视觉设计/占山为王/成品卡牌/背面/xiyao_zhanshanweiwang_artifact_back.png",
+  "land_back": "/Users/weijie/Documents/Xiyao/视觉设计/占山为王/成品卡牌/背面/xiyao_zhanshanweiwang_land_back.png",
   "template_preview": "/Users/weijie/Documents/Xiyao/视觉设计/占山为王/成品卡牌/模板/card_front_template_preview.png",
+  "preview_all_cards": "/Users/weijie/Documents/Xiyao/视觉设计/占山为王/成品卡牌/导出/preview_all_cards.png",
+  "monster_artifact_size_px": [
+    815,
+    1110
+  ],
+  "land_size_px": [
+    1110,
+    815
+  ],
   "missing_art": []
 }
