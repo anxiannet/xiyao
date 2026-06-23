@@ -1,4 +1,5 @@
 import { squads, type MatchState, type Phase } from '../engine/rules';
+import { factionAssetPaths, globalStatusAssetPaths, teamStatusAssetPaths } from './assets';
 
 const phaseName: Record<Phase, string> = {
   map_preview: '地图预览',
@@ -15,8 +16,12 @@ export default function PhaseHeader({ match }: { match: MatchState }) {
   return (
     <header className="phase battleHud">
       <b>{phaseName[match.phase]}</b>
-      <span>{match.round ? `第${match.round}回合` : '准备中'} · {squads[match.activeSquad].name}行动</span>
-      <em>狐火 {match.foxfire}/5</em>
+      <span className="hudFaction"><img src={factionAssetPaths[match.activeSquad]} alt="" />{match.round ? `第${match.round}回合` : '准备中'} · {squads[match.activeSquad].name}行动</span>
+      <em className="hudStatus">
+        {match.teamStatuses.qingqiu.includes('foxfire_full') && <img src={teamStatusAssetPaths.foxfire_full} alt="" />}
+        {match.globalStatuses.map((status) => <img key={status} src={globalStatusAssetPaths[status]} alt="" />)}
+        狐火 {match.foxfire}/5
+      </em>
     </header>
   );
 }

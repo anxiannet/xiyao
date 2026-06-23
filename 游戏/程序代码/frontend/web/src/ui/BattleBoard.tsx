@@ -2,30 +2,17 @@ import React from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { getMapConfig } from '../data/mapStorage';
 import { type DecreeId, type GameAction, type MatchState, type ObjectiveType, type SquadId, type TerrainId, type TileState, type UnitState } from '../engine/rules';
-import statusFoxfireRemnantUrl from '../assets/split-terrain/status_foxfire_remnant.png';
-import statusInspectionZoneUrl from '../assets/split-terrain/status_inspection_zone.png';
 import type { SelectedActionMode } from './ActionPanel';
-import sulingLeftBackUrl from '../assets/units/suling/suling_left_back.png';
-import sulingLeftFrontUrl from '../assets/units/suling/suling_left_front.png';
-import sulingLeftSideUrl from '../assets/units/suling/suling_left_side.png';
-import sulingRightBackUrl from '../assets/units/suling/suling_right_back.png';
-import sulingRightFrontUrl from '../assets/units/suling/suling_right_front.png';
-import sulingRightSideUrl from '../assets/units/suling/suling_right_side.png';
+import { decreeOverlayAssetPaths, getUnitAssetPath, tileStatusAssetPaths, unitAssetPaths, unitStatusAssetPaths } from './assets';
 
 type ViewMode = 'battle' | 'tactical';
 
 const assetUrls = {
-  statusFoxfireRemnant: statusFoxfireRemnantUrl,
-  statusInspectionZone: statusInspectionZoneUrl,
-  unitSulingLeftBack: sulingLeftBackUrl,
-  unitSulingLeftFront: sulingLeftFrontUrl,
-  unitSulingLeftSide: sulingLeftSideUrl,
-  unitSulingRightBack: sulingRightBackUrl,
-  unitSulingRightFront: sulingRightFrontUrl,
-  unitSulingRightSide: sulingRightSideUrl,
+  ...unitAssetPaths,
+  ...tileStatusAssetPaths,
+  ...unitStatusAssetPaths,
+  ...decreeOverlayAssetPaths,
 };
-
-type AssetKey = keyof typeof assetUrls;
 
 const squadColors: Record<SquadId, { fill: number; line: number; mark: string }> = {
   qingqiu: { fill: 0x4fa3a5, line: 0xc9fff6, mark: '青' },
@@ -47,7 +34,9 @@ const objectiveMarks: Record<ObjectiveType, string> = {
   edge: '边',
 };
 
-const UNIT_SPRITE_SIZE = 92;
+const UNIT_SPRITE_SIZE = 200;
+const REGULAR_HEX_HEIGHT_RATIO = Math.sqrt(3) / 2;
+const GRID_ROTATION_RAD = Math.PI / 6;
 
 const decreeText: Record<DecreeId, string> = {
   forbid_movement: '禁行令',
@@ -59,46 +48,82 @@ function getTileCenter(tile: TileState, match: MatchState) {
   const config = getMapConfig(match.mapId);
   const { grid } = config;
   const scale = grid.scale ?? 1;
-  const stepX = grid.hexWidth * 0.75 + grid.gapX;
-  const stepY = grid.hexHeight * 0.75 + grid.gapY;
+  const bounds = getRotatedHexBounds(grid.hexWidth);
+  const stepX = bounds.width + grid.gapX;
+  const stepY = bounds.height * 0.75 + grid.gapY;
   const rowOffset = tile.row % 2 === 0 ? 0 : stepX / 2;
   return {
-    x: (grid.offsetX + rowOffset + tile.col * stepX + grid.hexWidth / 2) * scale,
-    y: (grid.offsetY + tile.row * stepY + grid.hexHeight / 2) * scale,
+    x: (grid.offsetX + rowOffset + tile.col * stepX + bounds.width / 2) * scale,
+    y: (grid.offsetY + tile.row * stepY + bounds.height / 2) * scale,
   };
 }
 
 function getMapSize(match: MatchState) {
   const { grid } = getMapConfig(match.mapId);
   const scale = grid.scale ?? 1;
-  const stepX = grid.hexWidth * 0.75 + grid.gapX;
-  const stepY = grid.hexHeight * 0.75 + grid.gapY;
+  const bounds = getRotatedHexBounds(grid.hexWidth);
+  const stepX = bounds.width + grid.gapX;
+  const stepY = bounds.height * 0.75 + grid.gapY;
   return {
-    width: (grid.offsetX * 2 + grid.cols * stepX + grid.hexWidth) * scale,
-    height: (grid.offsetY * 2 + grid.rows * stepY + grid.hexHeight) * scale,
+    width: (grid.offsetX + (grid.cols - 1) * stepX + stepX / 2 + bounds.width) * scale,
+    height: (grid.offsetY + (grid.rows - 1) * stepY + bounds.height) * scale,
+  };
+}
+
+function getRenderSize(match: MatchState, backgroundTexture: Texture | null) {
+  if (backgroundTexture) {
+    return {
+      width: backgroundTexture.width,
+      height: backgroundTexture.height,
+    };
+  }
+  return getMapSize(match);
+}
+
+function getRegularHexHeight(hexWidth: number) {
+  return hexWidth * REGULAR_HEX_HEIGHT_RATIO;
+}
+
+function getRotatedHexBounds(hexWidth: number) {
+  return {
+    width: getRegularHexHeight(hexWidth),
+    height: hexWidth,
+  };
+}
+
+function rotatePoint(x: number, y: number) {
+  const cos = Math.cos(GRID_ROTATION_RAD);
+  const sin = Math.sin(GRID_ROTATION_RAD);
+  return {
+    x: x * cos - y * sin,
+    y: x * sin + y * cos,
   };
 }
 
 function drawHexPath(graphics: Graphics, width: number, height: number) {
-  graphics.moveTo(-width / 2, -height / 4);
-  graphics.lineTo(0, -height / 2);
-  graphics.lineTo(width / 2, -height / 4);
-  graphics.lineTo(width / 2, height / 4);
-  graphics.lineTo(0, height / 2);
-  graphics.lineTo(-width / 2, height / 4);
+  const points = [
+    rotatePoint(-width / 4, -height / 2),
+    rotatePoint(width / 4, -height / 2),
+    rotatePoint(width / 2, 0),
+    rotatePoint(width / 4, height / 2),
+    rotatePoint(-width / 4, height / 2),
+    rotatePoint(-width / 2, 0),
+  ];
+  graphics.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) {
+    graphics.lineTo(point.x, point.y);
+  }
   graphics.closePath();
 }
 
 function drawHex(graphics: Graphics, tile: TileState, match: MatchState, alpha = 0.14) {
   const { grid } = getMapConfig(match.mapId);
   const width = grid.hexWidth * (grid.scale ?? 1);
-  const height = grid.hexHeight * (grid.scale ?? 1);
-  const terrain = terrainMarks[tile.terrainLayer];
-  const line = tile.deploymentOwner ? squadColors[tile.deploymentOwner].line : terrain.line;
+  const height = getRegularHexHeight(grid.hexWidth) * (grid.scale ?? 1);
   graphics.clear();
   drawHexPath(graphics, width, height);
-  graphics.fill({ color: tile.terrainLayer === 'obstacle' ? 0x101318 : 0x000000, alpha: tile.terrainLayer === 'obstacle' ? 0.32 : alpha });
-  graphics.stroke({ color: line, width: tile.objectiveType ? 3 : 1.6, alpha: tile.objectiveType ? 0.98 : 0.72 });
+  graphics.fill({ color: tile.terrainLayer === 'obstacle' ? 0x101318 : 0x000000, alpha: tile.terrainLayer === 'obstacle' ? 0.2 : Math.min(alpha, 0.04) });
+  graphics.stroke({ color: 0xffffff, width: 3, alpha: 0.98 });
 }
 
 function makeText(value: string, size: number, color = 0xffefd2) {
@@ -131,11 +156,6 @@ function addCenteredSprite(layer: Container, texture: Texture, x: number, y: num
   layer.addChild(sprite);
 }
 
-function getUnitAssetKey(unit: UnitState): AssetKey | null {
-  if (unit.id !== 'suling') return null;
-  return 'unitSulingRightBack';
-}
-
 export default function BattleBoard({
   match,
   legalActions,
@@ -162,7 +182,7 @@ export default function BattleBoard({
   const hostRef = React.useRef<HTMLDivElement | null>(null);
   const appRef = React.useRef<Application | null>(null);
   const layersRef = React.useRef<Record<'background' | 'grid' | 'status' | 'unit' | 'effect', Container> | null>(null);
-  const assetTexturesRef = React.useRef<Partial<Record<AssetKey, Texture>>>({});
+  const assetTexturesRef = React.useRef<Record<string, Texture>>({});
   const backgroundTextureRef = React.useRef<Texture | null>(null);
   const [viewMode, setViewMode] = React.useState<ViewMode>('battle');
   const [ready, setReady] = React.useState(false);
@@ -192,6 +212,10 @@ export default function BattleBoard({
 
   const handleBoardTarget = React.useCallback((tile: TileState, unit: UnitState | undefined) => {
     if (selectedActionMode === 'move') {
+      if (unit) {
+        onSelectUnit(unit.id);
+        return true;
+      }
       const action = legalActions.find((item) => item.type === 'move' && item.targetTileId === tile.id);
       if (action) onAction(action);
       else onInvalidTarget();
@@ -210,7 +234,7 @@ export default function BattleBoard({
       return true;
     }
     return false;
-  }, [legalActions, onAction, onInvalidTarget, selectedActionMode]);
+  }, [legalActions, onAction, onInvalidTarget, onSelectUnit, selectedActionMode]);
 
   React.useEffect(() => {
     let disposed = false;
@@ -220,7 +244,7 @@ export default function BattleBoard({
     const app = new Application();
 
     Promise.all([
-      app.init({ antialias: true, backgroundAlpha: 0, resizeTo: host }),
+      app.init({ antialias: true, autoDensity: true, backgroundAlpha: 0, resolution: window.devicePixelRatio || 1, resizeTo: host }),
       Promise.all(Object.entries(assetUrls).map(async ([key, url]) => [key, await Assets.load<Texture>(url)] as const)),
     ]).then(([, loadedAssets]) => {
       initialized = true;
@@ -229,7 +253,7 @@ export default function BattleBoard({
         app.destroy();
         return;
       }
-      assetTexturesRef.current = Object.fromEntries(loadedAssets) as Partial<Record<AssetKey, Texture>>;
+      assetTexturesRef.current = Object.fromEntries(loadedAssets);
       host.appendChild(app.canvas);
       const background = new Container();
       const grid = new Container();
@@ -283,28 +307,28 @@ export default function BattleBoard({
     layers.status.removeChildren();
     layers.unit.removeChildren();
 
-    const mapSize = getMapSize(match);
     const backgroundTexture = backgroundTextureRef.current;
+    const mapSize = getRenderSize(match, backgroundTexture);
+    layers.background.scale.set(1);
+    layers.background.position.set(0, 0);
+    const battlefieldBg = new Graphics();
+    battlefieldBg.rect(0, 0, mapSize.width, mapSize.height);
+    battlefieldBg.fill({ color: 0x142421, alpha: 0.96 });
+    layers.background.addChild(battlefieldBg);
+
+    const widthScale = app.renderer.width / mapSize.width;
+    const fitScale = Math.min(widthScale, app.renderer.height / mapSize.height);
+    const scale = viewMode === 'battle' ? widthScale : fitScale * 0.88;
+    const offsetX = viewMode === 'battle' ? 0 : app.renderer.width / 2 - (mapSize.width / 2) * scale;
+    const offsetY = app.renderer.height / 2 - (mapSize.height / 2) * scale;
+
     if (backgroundTexture) {
       const sprite = new Sprite(backgroundTexture);
       sprite.width = mapSize.width;
       sprite.height = mapSize.height;
       layers.background.addChild(sprite);
-    } else {
-      const fallback = new Graphics();
-      fallback.rect(0, 0, mapSize.width, mapSize.height);
-      fallback.fill({ color: 0x18202a, alpha: 1 });
-      layers.background.addChild(fallback);
-      const label = makeText('缺少地图背景图', 22, 0xc9a86a);
-      label.position.set(mapSize.width / 2, mapSize.height / 2);
-      layers.background.addChild(label);
     }
 
-    const scale = viewMode === 'battle'
-      ? Math.min(app.renderer.width / mapSize.width, app.renderer.height / mapSize.height) * 0.98
-      : Math.min(app.renderer.width / mapSize.width, app.renderer.height / mapSize.height) * 0.88;
-    const offsetX = app.renderer.width / 2 - (mapSize.width / 2) * scale;
-    const offsetY = app.renderer.height / 2 - (mapSize.height / 2) * scale + (viewMode === 'battle' ? -18 : 0);
     for (const layer of [layers.background, layers.grid, layers.status, layers.unit]) {
       layer.scale.set(scale);
       layer.position.set(offsetX, offsetY);
@@ -357,7 +381,7 @@ export default function BattleBoard({
 
       if (moveTargets.has(tile.id) || skillTileTargets.has(tile.id)) {
         const halo = new Graphics();
-        drawHex(halo, tile, match, 0.26);
+        drawHex(halo, tile, match, 0.36);
         halo.position.set(x, y);
         halo.tint = moveTargets.has(tile.id) ? 0x4fa3a5 : 0xffd77a;
         layers.status.addChild(halo);
@@ -365,11 +389,11 @@ export default function BattleBoard({
 
       const statusSize = Math.max(mapConfig.grid.hexWidth, mapConfig.grid.hexHeight) * 0.72;
       if (tile.statusLayer.includes('foxfire_remnant')) {
-        const statusTexture = assetTexturesRef.current.statusFoxfireRemnant;
+        const statusTexture = assetTexturesRef.current.foxfire_remnant;
         if (statusTexture) addCenteredSprite(layers.status, statusTexture, x, y, statusSize, 0.82);
       }
       if (tile.statusLayer.includes('inspection_zone')) {
-        const statusTexture = assetTexturesRef.current.statusInspectionZone;
+        const statusTexture = assetTexturesRef.current.inspection_zone;
         if (statusTexture) addCenteredSprite(layers.status, statusTexture, x, y, statusSize, 0.82);
       }
     }
@@ -379,7 +403,7 @@ export default function BattleBoard({
       if (!tile) continue;
       const point = getTileCenter(tile, match);
       const group = new Container();
-      group.position.set(point.x, point.y - 20);
+      group.position.set(point.x, point.y - 28);
       group.eventMode = locked ? 'none' : 'static';
       group.cursor = locked ? 'default' : 'pointer';
       group.on('pointertap', (event) => {
@@ -388,33 +412,44 @@ export default function BattleBoard({
         if (handleBoardTarget(tile, unit)) return;
         onSelectUnit(unit.id);
       });
-      const unitAssetKey = getUnitAssetKey(unit);
-      const unitTexture = unitAssetKey ? assetTexturesRef.current[unitAssetKey] : null;
+      const unitAssetPath = getUnitAssetPath(unit);
+      const unitTexture = unitAssetPath ? assetTexturesRef.current[unit.id] ?? (unit.summon ? assetTexturesRef.current.azhao : null) : null;
       if (unitTexture) {
         const halo = new Graphics();
-        halo.ellipse(0, 16, 21, 9);
+        halo.ellipse(0, 28, 40, 14);
         halo.fill({ color: unit.squad === 'qingqiu' ? 0x4fa3a5 : 0xd8d2bf, alpha: match.selectedUnitId === unit.id ? 0.42 : 0.22 });
-        halo.stroke({ color: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 0xb85a3c : squadColors[unit.squad].line, width: match.selectedUnitId === unit.id ? 3 : 1, alpha: 0.9 });
+        halo.stroke({ color: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 0xff7652 : squadColors[unit.squad].line, width: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 3.4 : match.selectedUnitId === unit.id ? 3 : 1.4, alpha: 0.96 });
         group.addChild(halo);
         const sprite = new Sprite(unitTexture);
         sprite.anchor.set(0.5, 0.82);
-        sprite.width = UNIT_SPRITE_SIZE;
-        sprite.height = UNIT_SPRITE_SIZE;
-        sprite.position.set(0, 18);
+        sprite.width = unit.summon ? UNIT_SPRITE_SIZE * 0.76 : UNIT_SPRITE_SIZE;
+        sprite.height = unit.summon ? UNIT_SPRITE_SIZE * 0.76 : UNIT_SPRITE_SIZE;
+        sprite.position.set(0, 34);
         group.addChild(sprite);
       } else {
         const disc = new Graphics();
         const squad = squadColors[unit.squad];
         disc.circle(0, 0, unit.summon ? 12 : 16);
         disc.fill({ color: squad.fill, alpha: unit.summon ? 0.72 : 0.96 });
-        disc.stroke({ color: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 0xb85a3c : squad.line, width: match.selectedUnitId === unit.id ? 4 : 2 });
+        disc.stroke({ color: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 0xff7652 : squad.line, width: attackTargets.has(unit.id) || skillUnitTargets.has(unit.id) ? 4.2 : match.selectedUnitId === unit.id ? 4 : 2.2 });
         group.addChild(disc);
         const initial = makeText(unit.name.slice(0, 1), 17, unit.squad === 'tianmen' ? 0x232323 : 0x062226);
         group.addChild(initial);
       }
-      const hp = makeText(`${unit.hp}`, 9, 0xffffff);
-      hp.position.set(unitTexture ? 20 : 14, unitTexture ? 20 : 14);
+      const hp = makeText(`${unit.hp}`, unitTexture ? 12 : 9, 0xffffff);
+      hp.position.set(unitTexture ? 42 : 14, unitTexture ? 42 : 14);
       group.addChild(hp);
+      const unitStatusSize = unitTexture ? 26 : 18;
+      unit.statuses.forEach((status, index) => {
+        const statusTexture = assetTexturesRef.current[status];
+        if (!statusTexture) return;
+        const statusSprite = new Sprite(statusTexture);
+        statusSprite.anchor.set(0.5);
+        statusSprite.width = unitStatusSize;
+        statusSprite.height = unitStatusSize;
+        statusSprite.position.set(-42 + index * (unitStatusSize + 2), 38);
+        group.addChild(statusSprite);
+      });
       layers.unit.addChild(group);
     }
   }, [attackTargets, backgroundVersion, handleBoardTarget, locked, mapConfig.grid.hexHeight, mapConfig.grid.hexWidth, mapConfig.backgroundImage, match, moveTargets, onDeployTile, onSelectUnit, ready, selectedDeployUnitId, skillTileTargets, skillUnitTargets, viewMode]);
@@ -424,10 +459,18 @@ export default function BattleBoard({
     const layer = layersRef.current?.effect;
     if (!app || !layer || !effect || !ready) return undefined;
     layer.removeChildren();
+    const overlayTexture = assetTexturesRef.current[effect];
+    if (overlayTexture) {
+      const overlay = new Sprite(overlayTexture);
+      overlay.width = app.renderer.width;
+      overlay.height = app.renderer.height;
+      overlay.alpha = 0.82;
+      layer.addChild(overlay);
+    }
     const veil = new Graphics();
     const color = effect === 'forbid_movement' ? 0x17120c : effect === 'martial_law' ? 0xc9a86a : 0x2a313b;
     veil.rect(0, 0, app.renderer.width, app.renderer.height);
-    veil.fill({ color, alpha: effect === 'martial_law' ? 0.22 : 0.48 });
+    veil.fill({ color, alpha: overlayTexture ? 0.16 : effect === 'martial_law' ? 0.22 : 0.48 });
     layer.addChild(veil);
     const ring = new Graphics();
     ring.position.set(app.renderer.width / 2, app.renderer.height / 2);

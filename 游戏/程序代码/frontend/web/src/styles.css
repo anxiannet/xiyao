@@ -531,12 +531,14 @@ body {
   overscroll-behavior: none;
   touch-action: manipulation;
   background:
-    linear-gradient(180deg, rgba(16, 29, 31, .18), rgba(24, 35, 28, .24)),
-    url('./assets/backgrounds/battle-atmosphere-mobile.webp') center / cover fixed no-repeat,
+    radial-gradient(circle at 50% 32%, rgba(79,163,165,.12), transparent 34%),
+    linear-gradient(180deg, rgba(16, 29, 31, .94), rgba(24, 35, 28, .98)),
     #213b35;
 }
 
 .battleApp {
+  --top-ui-height: 52px;
+  --bottom-ui-height: calc(88px + env(safe-area-inset-bottom));
   position: relative;
   width: 100vw;
   height: 100dvh;
@@ -551,7 +553,6 @@ body {
     radial-gradient(circle at 50% 22%, rgba(240,210,142,.18), transparent 25%),
     radial-gradient(circle at 50% 78%, rgba(79,225,219,.14), transparent 36%),
     linear-gradient(180deg, rgba(16, 29, 31, .18), rgba(28, 39, 31, .30)),
-    url('./assets/backgrounds/battle-atmosphere-mobile.webp') center / cover no-repeat,
     #213b35;
 }
 
@@ -570,7 +571,9 @@ body {
   border: 0;
   border-radius: 0;
   border-bottom: 1px solid rgba(201,168,106,.34);
-  background: linear-gradient(180deg, rgba(24,44,43,.82), rgba(28,48,42,.46));
+  background:
+    linear-gradient(180deg, rgba(24,44,43,.58), rgba(28,48,42,.34)),
+    url('/assets/ui/ui_hud_bar.png') center / 100% 100% no-repeat;
   box-shadow: 0 8px 22px rgba(15,34,33,.22);
   backdrop-filter: blur(12px);
   font-size: 13px;
@@ -594,12 +597,32 @@ body {
   white-space: nowrap;
 }
 
+.hudFaction,
+.hudStatus {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hudFaction img,
+.hudStatus img {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.hudStatus {
+  justify-content: flex-end;
+}
+
 .battlefieldLayer {
   position: absolute;
-  top: 52px;
+  top: var(--top-ui-height);
   left: 0;
   right: 0;
-  bottom: 96px;
+  bottom: var(--bottom-ui-height);
   overflow: hidden;
 }
 
@@ -634,28 +657,24 @@ body {
 }
 
 .phasePrompt {
-  position: absolute;
-  left: 50%;
-  bottom: 108px;
-  z-index: 35;
-  transform: translateX(-50%);
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  height: var(--bottom-ui-height);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 8px;
+  align-items: center;
   justify-items: center;
-  min-width: 180px;
-  pointer-events: none;
-}
-
-.phasePrompt span {
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(24,44,43,.62);
-  border: 1px solid rgba(201,168,106,.28);
-  font-size: 12px;
+  border-top: 1px solid rgba(201,168,106,.34);
+  background: linear-gradient(180deg, rgba(31,53,47,.62), rgba(24,39,33,.84));
+  box-shadow: 0 -12px 30px rgba(13,31,30,.28);
+  backdrop-filter: blur(14px);
 }
 
 .phasePrompt button {
-  pointer-events: auto;
+  width: min(360px, 100%);
 }
 
 .primaryBattleButton {
@@ -682,17 +701,19 @@ body {
 }
 
 .actionBar {
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 40;
-  height: 88px;
+  height: var(--bottom-ui-height);
   padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
   border: 0;
   border-top: 1px solid rgba(201,168,106,.34);
   border-radius: 0;
-  background: linear-gradient(180deg, rgba(31,53,47,.62), rgba(24,39,33,.84));
+  background:
+    linear-gradient(180deg, rgba(31,53,47,.46), rgba(24,39,33,.70)),
+    url('/assets/ui/ui_action_bar.png') center / 100% 100% no-repeat;
   box-shadow: 0 -12px 30px rgba(13,31,30,.28);
   backdrop-filter: blur(14px);
 }
@@ -719,10 +740,11 @@ body {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 5px 12px rgba(13,31,30,.22);
 }
 
-.actionButton b {
-  line-height: 1;
-  font-size: 18px;
-  color: #f4d58f;
+.actionButton img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.42));
 }
 
 .actionButton span {
@@ -763,11 +785,18 @@ body {
 .deployChip b {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
+  overflow: hidden;
   background: rgba(79,163,165,.92);
   color: #061718;
+}
+
+.deployChip b img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
 }
 
 .deployChip span {
@@ -786,7 +815,7 @@ body {
 .unitMiniPanel {
   position: absolute;
   left: 12px;
-  bottom: 104px;
+  bottom: calc(var(--bottom-ui-height) + 8px);
   z-index: 35;
   width: 178px;
   min-height: 76px;
@@ -796,7 +825,9 @@ body {
   gap: 8px;
   border: 1px solid rgba(201,168,106,.42);
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(31,53,47,.70), rgba(24,39,33,.82));
+  background:
+    linear-gradient(180deg, rgba(31,53,47,.46), rgba(24,39,33,.68)),
+    url('/assets/ui/ui_panel_gold.png') center / 100% 100% no-repeat;
   box-shadow: 0 10px 24px rgba(13,31,30,.26);
   backdrop-filter: blur(12px);
 }
@@ -810,6 +841,13 @@ body {
   color: #062224;
   background: linear-gradient(180deg, #7bdadd, #4fa3a5);
   font-weight: 900;
+  overflow: hidden;
+}
+
+.unitAvatar img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
 }
 
 .unitMiniPanel b,
@@ -831,6 +869,37 @@ body {
   font-size: 11px;
 }
 
+.unitFaction {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+}
+
+.unitFaction img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.unitStatusList {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 2px !important;
+}
+
+.unitStatusList span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.unitStatusList img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
 .unitMiniPanel p {
   color: #fff2d0;
   font-size: 12px;
@@ -839,7 +908,7 @@ body {
 .floatingTools {
   position: absolute;
   right: 10px;
-  bottom: 104px;
+  bottom: calc(var(--bottom-ui-height) + 8px);
   z-index: 38;
   display: grid;
   gap: 8px;
@@ -862,13 +931,15 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 88px;
+  bottom: var(--bottom-ui-height);
   z-index: 50;
   height: 42vh;
   display: grid;
   grid-template-rows: 42px 1fr;
   border-top: 1px solid rgba(201,168,106,.42);
-  background: linear-gradient(180deg, rgba(31,53,47,.92), rgba(24,39,33,.96));
+  background:
+    linear-gradient(180deg, rgba(31,53,47,.76), rgba(24,39,33,.88)),
+    url('/assets/ui/ui_drawer_bg.png') center / 100% 100% no-repeat;
   box-shadow: 0 -18px 34px rgba(13,31,30,.30);
 }
 
@@ -940,8 +1011,8 @@ body {
   }
 
   .battlefieldLayer {
-    top: 52px;
-    bottom: 96px;
+    top: var(--top-ui-height);
+    bottom: var(--bottom-ui-height);
   }
 
   .unitMiniPanel {

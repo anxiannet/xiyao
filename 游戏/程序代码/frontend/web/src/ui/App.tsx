@@ -4,10 +4,8 @@ import { autoDeploySquad, deployUnit, allFormalUnitsDeployed } from '../engine/d
 import { generateLegalActions } from '../engine/actionGenerator';
 import { resolveAction } from '../engine/actionResolver';
 import { createMatch } from '../engine/matchFactory';
-import { validateMap } from '../engine/mapValidator';
 import { beginFirstRound } from '../engine/turnManager';
 import { addLog, type DecreeId, type GameAction, type MatchState } from '../engine/rules';
-import { getMapConfig } from '../data/mapStorage';
 import { saveCurrentMatch } from '../storage/localMatchStorage';
 import { loadAIStats } from '../storage/localStatsStorage';
 import ActionPanel, { type SelectedActionMode } from './ActionPanel';
@@ -17,6 +15,7 @@ import BattleLog from './BattleLog';
 import PhaseHeader from './PhaseHeader';
 import UnitInfoPanel from './UnitInfoPanel';
 import type { AIBatchProgress } from '../ai/aiSimulator';
+import { getPortraitAssetPath } from './assets';
 
 const FIXED_MAP_ID = 'tutorial_battlefield';
 const FIXED_MODE = '玩家 vs AI';
@@ -37,7 +36,6 @@ export default function App() {
   const [effect, setEffect] = React.useState<DecreeId | null>(null);
   const [match, setMatch] = React.useState<MatchState>(() => createMatch(FIXED_MODE, FIXED_MAP_ID, FIXED_PLAYER_SQUAD));
   const legalActions = React.useMemo(() => generateLegalActions(match), [match]);
-  const validation = React.useMemo(() => validateMap(getMapConfig(match.mapId)), [match.mapId]);
   const playerDeployUnits = match.units.filter((unit) => unit.squad === match.playerSquad && !unit.summon);
   const allDeployed = allFormalUnitsDeployed(match);
   const aiBatchProgress = React.useMemo<AIBatchProgress>(() => ({
@@ -65,8 +63,6 @@ export default function App() {
   }, [match.logs]);
 
   function startDeployment() {
-    const validation = validateMap(getMapConfig(match.mapId));
-    if (!validation.ok) return;
     setSelectedDeployUnitId(null);
     setMatch((current) => autoDeploySquad({ ...current, phase: 'deployment' }, 'tianmen'));
   }
@@ -125,8 +121,7 @@ export default function App() {
       </section>
       {match.phase === 'map_preview' && (
         <div className="phasePrompt">
-          <span className={validation.ok ? 'ok' : 'bad'}>{validation.ok ? '地图校验通过' : validation.errors.join('；')}</span>
-          <button className="primaryBattleButton" disabled={!validation.ok} onClick={startDeployment}>开始部署</button>
+          <button className="primaryBattleButton" onClick={startDeployment}>开始部署</button>
         </div>
       )}
       {match.phase === 'deployment' && (
@@ -139,7 +134,7 @@ export default function App() {
                 key={unit.id}
                 onClick={() => setSelectedDeployUnitId(unit.id)}
               >
-                <b>{unit.name.slice(0, 1)}</b>
+                <b>{getPortraitAssetPath(unit) ? <img src={getPortraitAssetPath(unit) ?? ''} alt="" /> : unit.name.slice(0, 1)}</b>
                 <span>{unit.deployed ? '已部署' : unit.name}</span>
               </button>
             ))}
